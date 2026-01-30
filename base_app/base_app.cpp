@@ -90,6 +90,82 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLin
 }
 
 /**
+ * @brief Dispatches raw Windows mouse messages to the active gl_application instance.
+ *
+ * Extracts the cursor position and auxiliary mouse flags from the Windows
+ * message parameters and forwards the event to the corresponding mouse
+ * handler on theApp. This centralizes translation from Win32 messages
+ * to the engine's input callbacks.
+ *
+ * @param message The Win32 mouse message identifier (e.g., WM_MOUSEMOVE, WM_LBUTTONDOWN).
+ * @param wParam  Message-specific flags (button state, wheel delta, key modifiers).
+ *                The lower 7 bits are masked and passed as the extra parameter
+ *                to the application-level handlers.
+ * @param lParam  Encodes the cursor position in client coordinates:
+ *                - low word: X position
+ *                - high word: Y position
+ *
+ * @note The following messages are handled and mapped:
+ *       - WM_MOUSEMOVE       -> gl_application::onMouseMove
+ *       - WM_LBUTTONDOWN     -> gl_application::onLMouseDown
+ *       - WM_LBUTTONUP       -> gl_application::onLMouseUp
+ *       - WM_LBUTTONDBLCLK   -> gl_application::onLDblClick
+ *       - WM_RBUTTONDOWN     -> gl_application::onRMouseDown
+ *       - WM_RBUTTONUP       -> gl_application::onRMouseUp
+ *       - WM_RBUTTONDBLCLK   -> gl_application::onRDblClick
+ *       - WM_MBUTTONDOWN     -> gl_application::onMMouseDown
+ *       - WM_MBUTTONUP       -> gl_application::onMMouseUp
+ *       - WM_MBUTTONDBLCLK   -> gl_application::onMDblClick
+ *       - WM_MOUSEWHEEL      -> gl_application::onMouseWheel
+ *         (wheel delta is extracted via GET_WHEEL_DELTA_WPARAM).
+ */
+static void handle_mouse_message(UINT message, WPARAM wParam, LPARAM lParam) {
+    int x, y;
+    x = LOWORD(lParam);
+    y = HIWORD(lParam);
+    unsigned __int64 extra = wParam & 0x7f;
+
+    switch (message)
+    {
+    case WM_MOUSEMOVE:
+        theApp->onMouseMove(x, y, extra);
+        break;
+    case WM_LBUTTONDOWN:
+        theApp->onLMouseDown(x, y, extra);
+        break;
+    case WM_LBUTTONUP:
+        theApp->onLMouseUp(x, y, extra);
+        break;
+    case WM_LBUTTONDBLCLK:
+        theApp->onLDblClick(x, y, extra);
+        break;
+    case WM_RBUTTONDOWN:
+        theApp->onRMouseDown(x, y, extra);
+        break;
+    case WM_RBUTTONUP:
+        theApp->onRMouseUp(x, y, extra);
+        break;
+    case WM_RBUTTONDBLCLK:
+        theApp->onRDblClick(x, y, extra);
+        break;
+    case WM_MBUTTONDOWN:
+        theApp->onMMouseDown(x, y, extra);
+        break;
+    case WM_MBUTTONUP:
+        theApp->onMMouseUp(x, y, extra);
+        break;
+    case WM_MBUTTONDBLCLK:
+        theApp->onMDblClick(x, y, extra);
+        break;
+
+    case WM_MOUSEWHEEL:
+        theApp->onMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam), extra);
+        break;
+    }
+}
+
+
+/**
  * @brief Window procedure for handling Windows messages.
  * @param hWnd Window handle.
  * @param message Message identifier.
@@ -134,56 +210,23 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
     case WM_KEYUP:                                                    // Update Keyboard Buffers For keyDown Released
         if ((wParam >= 0) && (wParam <= 255)) {                       // Is Key (wParam) In A Valid Range?
-            theApp->onKeyUp((int)wParam);                                  // Set The Selected Key (wParam) To False
+            theApp->onKeyUp((int)wParam);                             // Set The Selected Key (wParam) To False
             return 0;                                                 // Return
         }
         break;                                                        // Break
 
     case WM_MOUSEMOVE:
-    {
-        int x, y;
-        x = LOWORD(lParam);
-        y = HIWORD(lParam);
-        if (!mouse_set)
-        {
-            last_mouse_x = x;
-            last_mouse_y = y;
-        }
-        int dx = x - last_mouse_x;
-        int dy = y - last_mouse_y;
-        last_mouse_x = x;
-        last_mouse_y = y;
-        mouse_set = 1;
-        theApp->onMouseMove(dx, dy, wParam);
-    }
-    break;
     case WM_LBUTTONDOWN:
-        theApp->onMouseDown(MK_LBUTTON, wParam & 0x7f);
-        break;
     case WM_LBUTTONUP:
-        theApp->onMouseUp(MK_LBUTTON, wParam & 0x7f);
-        break;
     case WM_LBUTTONDBLCLK:
-        break;
     case WM_RBUTTONDOWN:
-        theApp->onMouseDown(MK_RBUTTON, wParam & 0x7f);
-        break;
     case WM_RBUTTONUP:
-        theApp->onMouseUp(MK_RBUTTON, wParam & 0x7f);
-        break;
     case WM_RBUTTONDBLCLK:
-        break;
     case WM_MBUTTONDOWN:
-        theApp->onMouseDown(MK_MBUTTON, wParam & 0x7f);
-        break;
     case WM_MBUTTONUP:
-        theApp->onMouseUp(MK_MBUTTON, wParam & 0x7f);
-        break;
     case WM_MBUTTONDBLCLK:
-        break;
-
     case WM_MOUSEWHEEL:
-        theApp->onMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam), wParam & 0x7f);
+        handle_mouse_message(message, wParam, lParam);
         break;
 
     case WM_PAINT:

@@ -5,13 +5,12 @@
 #include "vector.h"
 
 namespace base_math {
-
     /**
      * @brief Quaternion class for representing rotations and orientations.
-     * 
+     *
      * Inherits from basevector<T, 4> and provides quaternion operations.
      * The quaternion is stored as (x, y, z, w), where w is the scalar part.
-     * 
+     *
      * @tparam T Numeric type (float, double, etc.)
      */
     template <typename T>
@@ -67,30 +66,87 @@ namespace base_math {
 
         /**
          * @brief Converts the quaternion to a 4x4 rotation matrix.
+         *
+         * Computes a homogeneous 4x4 rotation matrix from this quaternion using the
+         * standard quaternion-to-matrix conversion formula. The resulting matrix
+         * represents the same rotation as the quaternion and can be used for 3D
+         * transformations in graphics pipelines.
+         *
+         * The matrix is stored in column-major order and follows the form:
+         *
+         * [ 1-2(y^2+z^2)   2(xy-wz)       2(xz+wy)       0 ]
+         * [ 2(xy+wz)       1-2(x^2+z^2)   2(yz-wx)       0 ]
+         * [ 2(xz-wy)       2(yz+wx)       1-2(x^2+y^2)   0 ]
+         * [ 0              0              0              1 ]
+         *
+         * where x, y, z are the vector components and w is the scalar component
+         * of the quaternion.
+         *
+         * @return basematrix<T, 4, 4> A 4x4 homogeneous rotation matrix with no
+         *         translation component (translation elements are set to 0).
+         *
+         * @note The quaternion does not need to be normalized before calling this
+         *       method, but non-normalized quaternions will produce scaled rotation
+         *       matrices which may not preserve distances.
+         */
+        void matrix(T M[16]) const {
+            T x = this->x(), y = this->y(), z = this->z(), w = this->w();
+            T xx = x * x, yy = y * y, zz = z * z;
+            T xy = x * y, xz = x * z, yz = y * z;
+            T wx = w * x, wy = w * y, wz = w * z;
+
+            M[0] = 1 - 2 * (yy + zz);
+            M[1] = 2 * (xy + wz);
+            M[2] = 2 * (xz - wy);
+            M[3] = 0;
+
+            M[4] = 2 * (xy - wz);
+            M[5] = 1 - 2 * (xx + zz);
+            M[6] = 2 * (yz + wx);
+            M[7] = 0;
+
+            M[8] = 2 * (xz + wy);
+            M[9] = 2 * (yz - wx);
+            M[10] = 1 - 2 * (xx + yy);
+            M[11] = 0;
+
+            M[12] = M[13] = M[14] = 0;
+            M[15] = 1;
+        }
+
+        /**
+         * @brief Convinience function returning a basematrix<T, 4, 4>
+         * made from the matrix calculated in the function above.
          * @return basematrix<T, 4, 4> representing the rotation.
          */
         basematrix<T, 4, 4> matrix() const {
-            basematrix<T, 4, 4> R;
-            R[0] = 1 - 2 * this->y() * this->y() - 2 * this->z() * this->z();
-            R[1] = 2 * this->x() * this->y() - 2 * this->w() * this->z();
-            R[2] = 2 * this->x() * this->z() + 2 * this->w() * this->y();
-            R[3] = 0;
+            T M[16];
+            matrix(M);
+            return basematrix<T, 4, 4>(M);
+        }
 
-            R[4] = 2 * this->x() * this->y() + 2 * this->w() * this->z();
-            R[5] = 1 - 2 * this->x() * this->x() - 2 * this->z() * this->z();
-            R[6] = 2 * this->y() * this->z() - 2 * this->w() * this->x();
-            R[7] = 0;
-
-            R[8] = 2 * this->x() * this->z() - 2 * this->w() * this->y();
-            R[9] = 2 * this->y() * this->z() + 2 * this->w() * this->x();
-            R[10] = 1 - 2 * this->x() * this->x() - 2 * this->y() * this->y();
-            R[11] = 0;
-
-            R[12] = R[13] = R[14] = 0;
-            R[15] = 1;
-            return R;
+        /**
+         * @brief Multiplies two quaternions.
+         * @param q1 First quaternion.
+         * @param q2 Second quaternion.
+         * @return Product quaternion.
+         */
+        template <typename T>
+        quaternion<T> operator * (/*const quaternion<T>& q1,*/ const quaternion<T>& q2) {
+            return quaternion(
+                this->w() * q2.w() - this->x() * q2.x() - this->y() * q2.y() - this->z() * q2.z(),
+                this->w() * q2.x() + this->x() * q2.w() + this->y() * q2.z() - this->z() * q2.y(),
+                this->w() * q2.y() - this->x() * q2.z() + this->y() * q2.w() + this->z() * q2.x(),
+                this->w() * q2.z() + this->x() * q2.y() - this->y() * q2.x() + this->z() * q2.w());
         }
     };
+
+    template <typename T>
+    inline quaternion<T> fromAxisAngle(const basevector<T, 3>& axis, T angle) {
+        T s = T(std::sin(angle * T(0.5)));
+        return quaternion<T>(T(std::cos(angle * T(0.5))), axis.x() * s, axis.y() * s, axis.z() * s);
+    }
+
 
     /**
      * @brief Multiplies a 3D vector by a quaternion.
@@ -104,20 +160,6 @@ namespace base_math {
             q.w() * v.x() + q.z() * v.y() - q.y() * v.z(),
             q.w() * v.y() + q.x() * v.z() - q.z() * v.x(),
             q.w() * v.z() + q.y() * v.x() - q.x() * v.y());
-    }
-
-    /**
-     * @brief Multiplies two quaternions.
-     * @param q1 First quaternion.
-     * @param q2 Second quaternion.
-     * @return Product quaternion.
-     */
-    template <typename T>
-    quaternion<T> operator * (const quaternion<T>& q1, const quaternion<T>& q2) {
-        return quaternion(q1.w() * q2.w() - q1.x() * q2.x() - q1.y() * q2.y() - q1.z() * q2.z(),
-            q1.w() * q2.x() + q1.x() * q2.w() + q1.y() * q2.z() - q1.z() * q2.y(),
-            q1.w() * q2.y() + q1.y() * q2.w() + q1.z() * q2.x() - q1.x() * q2.z(),
-            q1.w() * q2.z() + q1.z() * q2.w() + q1.x() * q2.y() - q1.y() * q2.x());
     }
 
     /**

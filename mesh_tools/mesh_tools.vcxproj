@@ -86,6 +86,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arcball.h" />
     <ClInclude Include="mesh_tools.h" />
     <ClInclude Include="mesh_view.h" />
     <ClInclude Include="model.h" />

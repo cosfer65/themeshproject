@@ -147,7 +147,9 @@ namespace base_math {
          * Throws std::out_of_range if pos >= C.
          */
         const T& operator()(size_t pos) const {
+#ifdef _DEBUG
             if (pos >= C) throw std::out_of_range("basevector index out of range");
+#endif
             return this->data[pos];
         }
 

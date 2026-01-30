@@ -9,6 +9,7 @@
 ///   widget using its own camera, light, shader, and primitive setup.
 
 #include "visual_objects.h"
+#include <memory>
 
 #include "gl_graphics.h"
 #include "gl_camera.h"
@@ -167,11 +168,11 @@ void UCS_view::initialize() {
 /// the combined camera and projection matrices, and finally draws the UCS primitive. The
 /// shader uniform `object_or_vertex_color` is set to 0 to indicate that object-level
 /// color should be used instead of per-vertex color.
-void UCS_view::render() {
+void UCS_view::render(const fmat4& user_rotation) {
     m_private_data->m_view->set_viewport();
     m_private_data->m_shader->use();
     m_private_data->m_light->apply(m_private_data->m_shader.get());
-    fmat4 cam_matrix = m_private_data->m_cam->perspective() * m_private_data->m_view->perspective();
+    fmat4 cam_matrix = user_rotation*m_private_data->m_cam->perspective() * m_private_data->m_view->perspective();
     m_private_data->m_shader->set_mat4("camera", cam_matrix);
     m_private_data->m_shader->set_vec3("cameraPos", m_private_data->m_cam->vLocation);
     m_private_data->m_shader->set_int("object_or_vertex_color", 0);  // use object color

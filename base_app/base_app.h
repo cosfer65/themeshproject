@@ -201,39 +201,128 @@ namespace base_app {
 
         /**
          * @brief Handles mouse move events.
-         * @param dx Mouse X delta.
-         * @param dy Mouse Y delta.
-         * @param extra_btn Additional button state.
+         *
+         * Called whenever the mouse cursor moves within the client area of the window.
+         *
+         * @param x The X-coordinate of the mouse cursor, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
          */
-        virtual void onMouseMove(int dx, int dy, WPARAM extra_btn) {};
+        virtual void onMouseMove(int x, int y, unsigned __int64 extra) {}
 
         /**
-         * @brief Handles mouse button down events.
-         * @param btn Mouse button identifier.
-         * @param extra_btn Additional button state.
+         * @brief Handles left mouse button down events.
+         *
+         * Called when the left mouse button is pressed within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
          */
-        virtual void onMouseDown(int btn, WPARAM extra_btn) {};
+        virtual void onLMouseDown(int x, int y, unsigned __int64 extra) {}
 
         /**
-         * @brief Handles mouse button up events.
-         * @param btn Mouse button identifier.
-         * @param extra_btn Additional button state.
+         * @brief Handles left mouse button up events.
+         *
+         * Called when the left mouse button is released within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
          */
-        virtual void onMouseUp(int btn, WPARAM extra_btn) {};
+        virtual void onLMouseUp(int x, int y, unsigned __int64 extra) {}
 
         /**
-         * @brief Handles mouse double-click events.
-         * @param btn Mouse button identifier.
-         * @param extra_btn Additional button state.
+         * @brief Handles left mouse button double-click events.
+         *
+         * Called when the left mouse button is double-clicked within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
          */
-        virtual void onMouseDblClick(int btn, WPARAM extra_btn) {};
+        virtual void onLDblClick(int x, int y, unsigned __int64 extra) {}
 
         /**
-         * @brief Handles mouse wheel events.
-         * @param delta Wheel delta.
-         * @param extra_btn Additional button state.
+         * @brief Handles right mouse button down events.
+         *
+         * Called when the right mouse button is pressed within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
          */
-        virtual void onMouseWheel(int delta, WPARAM extra_btn) {};
+        virtual void onRMouseDown(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles right mouse button up events.
+         *
+         * Called when the right mouse button is released within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
+         */
+        virtual void onRMouseUp(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles right mouse button double-click events.
+         *
+         * Called when the right mouse button is double-clicked within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
+         */
+        virtual void onRDblClick(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles middle mouse button down events.
+         *
+         * Called when the middle mouse button is pressed within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
+         */
+        virtual void onMMouseDown(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles middle mouse button up events.
+         *
+         * Called when the middle mouse button is released within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
+         */
+        virtual void onMMouseUp(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles middle mouse button double-click events.
+         *
+         * Called when the middle mouse button is double-clicked within the client area.
+         *
+         * @param x The X-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param y The Y-coordinate of the mouse cursor at the time of the event, in client coordinates.
+         * @param extra Additional mouse data or key/button state (implementation-defined, e.g., WPARAM/LPARAM flags).
+         */
+        virtual void onMDblClick(int x, int y, unsigned __int64 extra) {}
+
+        /**
+         * @brief Handles mouse wheel scroll events.
+         *
+         * Called when the mouse wheel is rotated while the cursor is over the window
+         * or the window has input focus.
+         *
+         * @param delta The scroll amount and direction. Typically corresponds to
+         *              the wheel delta from `WM_MOUSEWHEEL` (positive for forward/up,
+         *              negative for backward/down), often in multiples of `WHEEL_DELTA`.
+         * @param extra_btn Additional mouse or keyboard state information associated
+         *                  with the event (implementation-defined, e.g., `WPARAM` flags
+         *                  indicating mouse buttons or modifier keys).
+         */
+        virtual void onMouseWheel(int delta, unsigned __int64 extra_btn) {}
     };
 }
 

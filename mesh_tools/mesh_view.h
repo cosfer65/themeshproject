@@ -137,17 +137,40 @@ public:
     /// toggling visualization modes or resetting the camera.
     int onCommand(int cmd);
 
-    /// \brief Processes mouse move events for interactive camera control.
+    /// \brief Handles mouse move events over the mesh view.
     ///
-    /// \param dx         Horizontal mouse movement delta, in pixels.
-    /// \param dy         Vertical mouse movement delta, in pixels.
-    /// \param extra_btn  Bitmask or flag set representing extra mouse buttons
-    ///                   and/or modifier keys active during the event.
+    /// \param x      Current mouse X position in window/client coordinates.
+    /// \param y      Current mouse Y position in window/client coordinates.
+    /// \param extra  Additional mouse state, typically a bitmask containing
+    ///               button and/or modifier key flags provided by the windowing system.
     ///
-    /// This is typically used to rotate, pan, or otherwise manipulate the
-    /// view of the mesh. When `block_mouse_event` is `true`, this input
-    /// may be ignored to prevent interaction during critical operations.
-    void mouse_move(int dx, int dy, unsigned __int64 extra_btn);
+    /// This is typically used to update camera orientation or perform
+    /// interactive operations (e.g., rotation, panning, selection) while one
+    /// or more mouse buttons are pressed. When mouse input is blocked
+    /// (see `block_mouse_event`), this handler should ignore incoming events.
+    void onMouseMove(int x, int y, unsigned __int64 extra);
+
+    /// \brief Handles left mouse button press events.
+    ///
+    /// \param x      Mouse X position at the time of the click.
+    /// \param y      Mouse Y position at the time of the click.
+    /// \param extra  Additional mouse state, typically a bitmask of modifier
+    ///               keys or other button states.
+    ///
+    /// Common uses include starting camera interactions (orbit / pan),
+    /// initiating drag operations, or beginning mesh element selection.
+    void onLMouseDown(int x, int y, unsigned __int64 extra);
+
+    /// \brief Handles left mouse button release events.
+    ///
+    /// \param x      Mouse X position at the time the button is released.
+    /// \param y      Mouse Y position at the time the button is released.
+    /// \param extra  Additional mouse state, typically a bitmask of modifier
+    ///               keys or other button states.
+    ///
+    /// Used to finalize drag/rotate operations, complete selection, and
+    /// generally stop any interaction that was started in `onLMouseDown()`.
+    void onLMouseUp(int x, int y, unsigned __int64 extra);
 
     /// \brief Processes mouse wheel events to adjust zoom or field of view.
     ///
@@ -159,7 +182,7 @@ public:
     /// Typically used to update `fov`, resulting in zooming in or out of
     /// the displayed mesh. When `block_mouse_event` is `true`, the event
     /// may be ignored until interaction is re-enabled.
-    void mouse_wheel(int delta, unsigned __int64 extra_btn);
+    void onMouseWheel(int delta, unsigned __int64 extra_btn);
 };
 
 #endif // __mesh_view_h__

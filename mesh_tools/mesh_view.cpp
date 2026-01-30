@@ -7,6 +7,7 @@
 
 #include "mesh_view.h"
 #include "resource.h"
+#include "arcball.h"
 
 #include "model.h"
 
@@ -42,6 +43,8 @@ struct mesh_view_private {
     std::vector<std::unique_ptr<visual_objects>> m_face_normals;        ///< Visualization of per-face normals as line segments.
     std::vector<std::unique_ptr<visual_objects>> m_model_curvatures_min;///< Visualization of minimum principal curvature directions per vertex.
     std::vector<std::unique_ptr<visual_objects>> m_model_curvatures_max;///< Visualization of maximum principal curvature directions per vertex.
+
+    std::unique_ptr<arcball> m_arcball;                                 ///< Arcball for mouse interaction
 };
 
 /// @brief Constructs a new `mesh_view` and initializes basic helpers.
@@ -52,6 +55,7 @@ mesh_view::mesh_view() {
     m_private = new mesh_view_private();
     m_private->m_view.reset(new base_opengl::gl_viewport());
     m_private->m_ucs_view.reset(new UCS_view());
+    m_private->m_arcball.reset(new arcball(800, 600));
 }
 
 /// @brief Destroys the `mesh_view` and releases all associated resources.
@@ -110,9 +114,11 @@ void mesh_view::render() {
     glClearColor(.25f, .25f, .25f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    fmat4 rot_mat(m_private->m_arcball->rotation());
+
     // combine the view and camera matrices into one
     // these matrices are COLUMN MAJOR!
-    fmat4 cam_matrix = m_private->m_cam->perspective() * m_private->m_view->perspective();
+    fmat4 cam_matrix = rot_mat * m_private->m_cam->perspective() * m_private->m_view->perspective();
 
     // enable the shader
     m_private->m_shader->use();
@@ -139,8 +145,9 @@ void mesh_view::render() {
     m_private->m_shader->end();
 
     // render coordinate system arrows
-    if (m_private->m_ucs_view.get() != nullptr)
-        m_private->m_ucs_view->render();
+    if (m_private->m_ucs_view.get() != nullptr) {
+        m_private->m_ucs_view->render(rot_mat);
+    }
 }
 
 /// @brief Builds visualizations of vertex principal curvature directions for the current model.
@@ -199,6 +206,8 @@ void compute_vertex_curvatures(half_edge_mesh<float>* mesh);
 /// `compute_vertex_curvatures()`, and then rebuilds the curvature visualization geometry
 /// by calling `generate_model_curvature_view()`.
 void mesh_view::do_curvature_calculation() {
+    if (!m_private->m_model)
+        return;
     const auto& parts = m_private->m_model->get_parts();
     for (base_math::half_edge_mesh<float>* part : parts) {
         compute_vertex_curvatures(part);
@@ -244,6 +253,7 @@ void mesh_view::generate_model_normals() {
 ///
 /// Adjusts the viewport aspect ratio and forwards the resize event to the UCS view (if present).
 void mesh_view::resize(int width, int height) {
+    m_private->m_arcball->resize((float)width, (float)height);
     m_private->m_view->set_window_aspect(width, height);
     if (m_private->m_ucs_view.get() != nullptr)
         m_private->m_ucs_view->resize_window(width, height);
@@ -322,60 +332,6 @@ int mesh_view::onCommand(int cmd) {
     return 1;
 }
 
-/// @brief Handles mouse movement to rotate the model and UCS view.
-///
-/// @param dx        Horizontal mouse delta in pixels.
-/// @param dy        Vertical mouse delta in pixels.
-/// @param extra_btn Bitmask of mouse buttons (e.g., `MK_LBUTTON`, `MK_RBUTTON`).
-///
-/// Behavior:
-/// - First mouse event after loading a model is ignored (used to clear stale deltas).
-/// - With left button pressed, rotates the model and all visualization overlays around X/Y.
-/// - With right button pressed, rotates around Z.
-/// - The UCS view is rotated by the same deltas to keep it aligned with the model orientation.
-void mesh_view::mouse_move(int dx, int dy, unsigned __int64 extra_btn) {
-    if (block_mouse_event) {
-        block_mouse_event = false;
-        return;
-    }
-    if (extra_btn & MK_LBUTTON) {
-        if (m_private->m_draw_parts.size() > 0) {
-            for (const auto& part : m_private->m_draw_parts) {
-                part->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            }
-        }
-
-        for (auto& part : m_private->m_face_normals) {
-            part->get_prim()->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-        }
-        for (auto& part : m_private->m_model_curvatures_min) {
-            part->get_prim()->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-        }
-        for (auto& part : m_private->m_model_curvatures_max) {
-            part->get_prim()->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-        }
-
-        m_private->m_ucs_view->rotate_ucs_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-    }
-    if (extra_btn & MK_RBUTTON) {
-        if (m_private->m_draw_parts.size() > 0) {
-            for (const auto& part : m_private->m_draw_parts) {
-                part->rotate_by(0, 0, dtr(dy / 5.f));
-            }
-        }
-        for (auto& part : m_private->m_face_normals) {
-            part->get_prim()->rotate_by(0, 0, dtr(dy / 5.f));
-        }
-        for (auto& part : m_private->m_model_curvatures_min) {
-            part->get_prim()->rotate_by(0, 0, dtr(dy / 5.f));
-        }
-        for (auto& part : m_private->m_model_curvatures_max) {
-            part->get_prim()->rotate_by(0, 0, dtr(dy / 5.f));
-        }
-
-        m_private->m_ucs_view->rotate_ucs_by(0, 0, dtr(dy / 5.f));
-    }
-}
 
 /// @brief Handles mouse wheel input to zoom in and out by changing the field of view.
 ///
@@ -384,7 +340,7 @@ void mesh_view::mouse_move(int dx, int dy, unsigned __int64 extra_btn) {
 ///
 /// Adjusts the `fov` value within a clamped range [0.5°, 65°] and updates the viewport
 /// projection accordingly.
-void mesh_view::mouse_wheel(int delta, unsigned __int64 extra_btn) {
+void mesh_view::onMouseWheel(int delta, unsigned __int64 extra_btn) {
     if (delta > 0)
         fov -= 0.5f;
     if (delta < 0)
@@ -395,4 +351,40 @@ void mesh_view::mouse_wheel(int delta, unsigned __int64 extra_btn) {
         fov = 65.f;
 
     m_private->m_view->set_fov(dtr(fov));
+}
+
+/// @brief Handles mouse move events while interacting with the mesh view.
+///
+/// Updates the arcball controller with the current cursor position to continuously
+/// update the view rotation during an active drag operation.
+///
+/// @param x     Current mouse X position in window/client coordinates.
+/// @param y     Current mouse Y position in window/client coordinates.
+/// @param extra Additional mouse state flags (currently unused).
+void mesh_view::onMouseMove(int x, int y, unsigned __int64 extra) {
+    m_private->m_arcball->drag(float(x), float(y));
+}
+
+/// @brief Handles left mouse button press to start an arcball rotation.
+///
+/// Captures the initial mouse position and notifies the arcball controller that
+/// a drag operation has started, enabling interactive rotation of the mesh view.
+///
+/// @param x     Mouse X position at the time of button press.
+/// @param y     Mouse Y position at the time of button press.
+/// @param extra Additional mouse state flags (currently unused).
+void mesh_view::onLMouseDown(int x, int y, unsigned __int64 extra) {
+    m_private->m_arcball->beginDrag(float(x), float(y));
+}
+
+/// @brief Handles left mouse button release to end an arcball rotation.
+///
+/// Signals the arcball controller to finalize the current drag operation, freezing
+/// the current view rotation until a new drag is started.
+///
+/// @param x     Mouse X position at the time of button release (unused).
+/// @param y     Mouse Y position at the time of button release (unused).
+/// @param extra Additional mouse state flags (currently unused).
+void mesh_view::onLMouseUp(int x, int y, unsigned __int64 extra) {
+    m_private->m_arcball->endDrag();
 }
