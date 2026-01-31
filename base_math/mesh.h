@@ -25,28 +25,53 @@
 #include <map>
 #include <set>
 #include "string_utils.h"
-// 
+ //
 #include "geometry.h"
 #include "vector.h"
 
 namespace base_math {
+    /**
+     * @brief Order a collection of directed edges into a continuous chain.
+     *
+     * This function attempts to rearrange a vector of directed edges (represented
+     * as pairs of vertex indices) so that they form a single continuous path where
+     * the target vertex of edge[i] matches the source vertex of edge[i+1].
+     *
+     * The algorithm works by iterating through the chain and for each position `cur`,
+     * searching the remaining unsorted portion for an edge whose source vertex matches
+     * the target vertex of the previous edge (chain[cur-1].second). When found, that
+     * edge is swapped into position `cur`. If no matching edge is found at any step,
+     * the function returns false indicating the edges cannot form a valid chain.
+     *
+     * This is particularly useful in mesh processing when collecting edges around a
+     * vertex or face and needing them in topologically ordered sequence.
+     *
+     * @param chain A vector of directed edges to be ordered in-place. Each edge is
+     *              represented as a pair (source_vertex_id, target_vertex_id).
+     *
+     * @return true if the edges were successfully ordered into a continuous chain;
+     *         false if the edges cannot form a connected sequence (e.g., if there
+     *         are disconnected components or gaps in the topology).
+     *
+     * @note The input vector is modified in-place via element swapping.
+     * @note Time complexity: O(n^2) in the worst case, where n is the chain size.
+     */
     inline bool order_chain(std::vector<std::pair<size_t, size_t>>& chain) {
-        size_t cur;
-        size_t many = chain.size();
-        for (cur = 1; cur < many; ++cur) {
+        const size_t many = chain.size();
+        for (size_t cur = 1; cur < many; ++cur) {
             size_t i;
             for (i = cur; i < many; ++i) {
                 if (chain[i].first == chain[cur - 1].second) {
                     if (i != cur) {
-                        auto temp = chain[cur];
-                        chain[cur] = chain[i];
-                        chain[i] = temp;
+                        std::swap(chain[cur], chain[i]);
                     }
                     break;
                 }
             }
+            if (i == many) {
+                return false;
+            }
         }
-
         return true;
     }
 
@@ -68,14 +93,59 @@ namespace base_math {
     struct half_edge;
 
     /**
-  * @brief Vertex stored in the half-edge mesh.
-  *
-  * Stores a unique identifier, its 3D coordinates, a per-vertex normal and a
-  * list of incident face ids. Normals are expected to be unit-length after
-  * calling the mesh convenience routines.
-  *
-  * @tparam T numeric type (float, double, etc.)
-  */
+     * @brief Per-vertex curvature information for differential geometry operations.
+     *
+     * This structure groups together all scalar and directional curvature
+     * quantities computed at a mesh vertex. It is typically filled by curvature
+     * estimation routines (see `mesh_tools\mt_curvature.cpp`) and then consumed
+     * by tools that classify surface type, visualize curvature fields, or
+     * perform curvature-based processing.
+     *
+     * The convention used is:
+     * - `principal_curvatures[0]` : minimum principal curvature k_min
+     * - `principal_curvatures[1]` : maximum principal curvature k_max
+     * - `principal_directions[0]` : unit direction associated with k_min
+     * - `principal_directions[1]` : unit direction associated with k_max
+     *
+     * In addition, several derived quantities are cached for convenience:
+     * - `absKmin` / `absKmax` : absolute values of k_min and k_max
+     * - `meanCurvature`      : mean curvature H = (k_min + k_max) / 2
+     * - `gaussCurvature`     : Gaussian curvature K = k_min * k_max
+     * - `signGauss`          : sign of Gaussian curvature (typically -1, 0, or 1)
+     * - `signMean`           : sign of mean curvature (typically -1, 0, or 1)
+     *
+     * @tparam T Numeric type used to represent curvature values
+     *           (e.g., `float` or `double`).
+     */
+    template<typename T>
+    struct VertexCurvatureData {
+        /// Principal curvatures at the vertex: index 0 = k_min, index 1 = k_max.
+        T principal_curvatures[2];
+        /// Principal directions corresponding to `principal_curvatures` (0 = dir of k_min, 1 = dir of k_max).
+        basevector<T, 3> principal_directions[2];
+        /// Absolute value of the minimum principal curvature |k_min|.
+        T absKmin;
+        /// Absolute value of the maximum principal curvature |k_max|.
+        T absKmax;
+        /// Mean curvature H = (k_min + k_max) / 2.
+        T meanCurvature;
+        /// Gaussian curvature K = k_min * k_max.
+        T gaussCurvature;
+        /// Sign of Gaussian curvature K (e.g., -1 for saddle, 0 for flat, 1 for elliptic).
+        int signGauss;
+        /// Sign of mean curvature H (e.g., -1 for concave, 0 for minimal, 1 for convex).
+        int signMean;
+    };
+
+    /**
+     * @brief Vertex stored in the half-edge mesh.
+     *
+     * Stores a unique identifier, its 3D coordinates, a per-vertex normal and a
+     * list of incident face ids. Normals are expected to be unit-length after
+     * calling the mesh convenience routines.
+     *
+     * @tparam T numeric type (float, double, etc.)
+     */
     template <typename T>
     struct vertex {
         /// Unique vertex id (user-provided).
@@ -93,23 +163,10 @@ namespace base_math {
         // Voronoi area associated with this vertex
         T voronoi_area;
 
-        /// Maximum principal curvature at this vertex (largest eigenvalue of shape operator).
-        T curvature_max;
-
-        /// Minimum principal curvature at this vertex (smallest eigenvalue of shape operator).
-        T curvature_min;
-
-        /// Principal direction corresponding to minimum curvature (eigenvector of shape operator).
-        basevector<T, 3> principal_dir_min;
-
-        /// Principal direction corresponding to maximum curvature (eigenvector of shape operator).
-        basevector<T, 3> principal_dir_max;
-
-        /// Gaussian curvature (product of principal curvatures: K = k1 * k2).
-        T gauss_curvature;
-
-        /// Mean curvature (average of principal curvatures: H = (k1 + k2) / 2).
-        T mean_curvature;
+        /// Per-vertex differential-geometry data (principal curvatures, directions, and derived measures).
+        /// Filled by curvature estimation routines (e.g., in `mesh_tools\mt_curvature.cpp`) and consumed by
+        /// algorithms that classify or visualize local surface shape at this vertex.
+        VertexCurvatureData<T> curvature_data;
 
         /// Surface type label for this vertex.
         vertex_label label;
@@ -478,7 +535,7 @@ namespace base_math {
         * - Computes the face centroid as the arithmetic mean of the three
         *   vertex positions and stores it in `f->center`.
         * - Computes the triangle area using `triangle_area` on the three edge
-        *   vectors `(v1 - v2)`, `(v2 - v3)` and `(v3 - v1)` and stores it in
+        *   vectors `(v1 - v2), (v2 - v3)` and `(v3 - v1)` and stores it in
         *   `f->area`.
         *
         * The resulting `center` and `area` values can be used for geometric
@@ -508,12 +565,11 @@ namespace base_math {
         * This produces smooth shading normals suitable for rendering.
         */
         void compute_vertex_normals() {
-            // Initialize all vertex normals to zero
+            // Initialization and accumulation
             for (auto v_pair : vertices) {
                 vertex<T>* v = v_pair.second;
                 v->normal = basevector<T, 3>(0.0f, 0.0f, 0.0f);
             }
-            // Accumulate face normals to vertex normals
             for (auto f_pair : faces) {
                 face<T>* f = f_pair.second;
                 basevector<T, 3> face_normal = f->normal;
@@ -521,7 +577,7 @@ namespace base_math {
                 vertices[f->v2]->normal += face_normal;
                 vertices[f->v3]->normal += face_normal;
             }
-            // Normalize vertex normals
+            // Normalization
             for (auto v_pair : vertices) {
                 vertex<T>* v = v_pair.second;
                 v->normal.normalize();
@@ -624,7 +680,7 @@ namespace base_math {
 
         basematrix<T, 2, 3> get_bounding_box() {
             if (vertices.size() == 0) {
-                return basematrix<T,2,3>(); // empty matrix
+                return basematrix<T, 2, 3>(); // empty matrix
             }
             T min_x = std::numeric_limits<T>::max();
             T min_y = std::numeric_limits<T>::max();
@@ -642,7 +698,7 @@ namespace base_math {
                 if (coords.y() > max_y) max_y = coords.y();
                 if (coords.z() > max_z) max_z = coords.z();
             }
-            basematrix<T, 2, 3> bbox({min_x, min_y, min_z, max_x, max_y, max_z});
+            basematrix<T, 2, 3> bbox({ min_x, min_y, min_z, max_x, max_y, max_z });
             return bbox;
         }
 

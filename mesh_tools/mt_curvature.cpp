@@ -368,18 +368,17 @@ Inputs and outputs
 •	accum_II[1] = f (mixed term)
 •	accum_II[2] = g (a.k.a. G in some texts)
 These are the vertex-accumulated second fundamental form coefficients in the vertex tangent frame
-(they come from the per-element ee_ff_gg_V accumulations you computed earlier).
-•	principal_curvs[2] (output):
+(they come from the per-element ee_ff_gg_V accumulations we computed earlier).
 •	principal_curvs[0] = k_min
 •	principal_curvs[1] = k_max
 after the swap step, index 0 is guaranteed to be the smaller value.
 •	absKmin, absKmax (outputs): magnitudes of the principal curvatures.
 •	signGauss, signMean (outputs): sign indicators (?1, 0, +1-ish via tolerance) for Gaussian and “mean” curvature.
 */
-void transformComponentsToCurvatureData(const float* accum_II,
-    float* principal_curvs,
-    float& absKmin, float& absKmax,
-    int& signGauss, int& signMean)
+void transformComponentsToCurvatureData(const float* accum_II, VertexCurvatureData<float>& curvature_data)
+    // float* principal_curvs,
+    // float& absKmin, float& absKmax,
+    // int& signGauss, int& signMean)
 {
     // -  e = accum_II[0]
     // -  f = accum_II[1]
@@ -397,9 +396,10 @@ void transformComponentsToCurvatureData(const float* accum_II,
     // 
     // Compute Gaussian and Mean curvature from second fundamental form coefficients
     float Gauss_curvature = accum_II[0] * accum_II[2] - accum_II[1] * accum_II[1];
-
+    curvature_data.gaussCurvature = Gauss_curvature;
     // Mean curvature H = 0.5 * (e + g)
     float Mean_curvature = float(0.5 * (accum_II[0] + accum_II[2]));
+    curvature_data.meanCurvature = Mean_curvature;
 
     // Solve the characteristic polynomial of the Weingarten matrix to get principal curvatures
     // They solve the characteristic polynomial of the 2x2 matrix :
@@ -413,30 +413,30 @@ void transformComponentsToCurvatureData(const float* accum_II,
     // -  k^2 - 2Hk + k = 0
     std::tuple<float, float> res;
     solve_quadratic<float>(1, -2 * Mean_curvature, Gauss_curvature, res);
-    principal_curvs[0] = std::get<0>(res);
-    principal_curvs[1] = std::get<1>(res);
-    if (principal_curvs[0] > principal_curvs[1]) {
-        std::swap(principal_curvs[0], principal_curvs[1]);
+    curvature_data.principal_curvatures[0] = std::get<0>(res);
+    curvature_data.principal_curvatures[1] = std::get<1>(res);
+    if (curvature_data.principal_curvatures[0] > curvature_data.principal_curvatures[1]) {
+        std::swap(curvature_data.principal_curvatures[0], curvature_data.principal_curvatures[1]);
     }
     // Determine signs of Gaussian and Mean curvature, and magnitudes of principal curvatures
-    float mean = float(0.5 * (principal_curvs[0] + principal_curvs[1]));
-    signGauss = 0;
+    float mean = float(0.5 * (curvature_data.principal_curvatures[0] + curvature_data.principal_curvatures[1]));
+    curvature_data.signGauss = 0;
     if (mean > TOLLERANCE<float>)
-        signMean = 1;
+        curvature_data.signMean = 1;
     else if (mean < -TOLLERANCE<float>)
-        signMean = -1;
-    if (principal_curvs[0] * principal_curvs[1] > TOLLERANCE<float>)
-        signGauss = 1;
-    else if (principal_curvs[0] * principal_curvs[1] < -TOLLERANCE<float>)
-        signGauss = -1;
+        curvature_data.signMean = -1;
+    if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] > TOLLERANCE<float>)
+        curvature_data.signGauss = 1;
+    else if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] < -TOLLERANCE<float>)
+        curvature_data.signGauss = -1;
     // Store absolute values of principal curvatures
-    if (fabs(principal_curvs[0]) < fabs(principal_curvs[1])) {
-        absKmin = float(fabs(principal_curvs[0]));
-        absKmax = float(fabs(principal_curvs[1]));
+    if (fabs(curvature_data.principal_curvatures[0]) < fabs(curvature_data.principal_curvatures[1])) {
+        curvature_data.absKmin = float(fabs(curvature_data.principal_curvatures[0]));
+        curvature_data.absKmax = float(fabs(curvature_data.principal_curvatures[1]));
     }
     else {
-        absKmax = float(fabs(principal_curvs[0]));
-        absKmin = float(fabs(principal_curvs[1]));
+        curvature_data.absKmax = float(fabs(curvature_data.principal_curvatures[0]));
+        curvature_data.absKmin = float(fabs(curvature_data.principal_curvatures[1]));
     }
 }
 
@@ -660,11 +660,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
     float W[] = { normalized_ee,normalized_ff,normalized_gg };
 
     // Derive principal curvature values and curvature signs
-    float principal_curvs[2];
-    float absKmin = 0;
-    float absKmax = 0;
-    int signGauss = 0;
-    int signMean = 0;
+    VertexCurvatureData<float>& curvature_data = v.curvature_data;
 
     // -  transformComponentsToCurvatureData:
     // -    Computes Gaussian curvature K = e*g - f².
@@ -672,7 +668,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
     // -    Solves the eigenvalue problem of W to get the 2 principal curvatures (principal_curvs[0], principal_curvs[1]).
     // -    Determines sign information and absolute magnitudes.
     // At this point, we have the eigenvalues (principal curvature magnitudes) at the vertex.
-    transformComponentsToCurvatureData(W, principal_curvs, absKmin, absKmax, signGauss, signMean);
+    transformComponentsToCurvatureData(W, curvature_data);
 
     //Get position of Node
     //fvec3 Node_3d = v.coords;
@@ -683,15 +679,10 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
     // -  Chooses which eigenvector corresponds to min and max principal curvature.
     // -  Transforms those 2D directions into 3D using u_vertex and v_vertex, and normalizes them.
     // So:
-    // -  dmin: 3D direction of minimum curvature.
-    // -  dmax: 3D direction of maximum curvature.
-    fvec3 dmin;
-    fvec3 dmax;
-    calculatePrincipalDirections(W, principal_curvs, u_vertex, v_vertex, dmin, dmax);
-
-    // Store principal directions on the vertex
-    v.principal_dir_min = dmin;
-    v.principal_dir_max = dmax;
+    // -  curvature_data.principal_directions[0]: 3D direction of minimum curvature.
+    // -  curvature_data.principal_directions[1]: 3D direction of maximum curvature.
+    calculatePrincipalDirections(W, curvature_data.principal_curvatures, u_vertex, v_vertex, 
+        curvature_data.principal_directions[0], curvature_data.principal_directions[1]);
 }
 
 // compute_vertex_curvatures computes curvature information for all vertices in the mesh.

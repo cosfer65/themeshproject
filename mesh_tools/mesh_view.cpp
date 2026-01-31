@@ -173,8 +173,8 @@ void mesh_view::generate_model_curvature_view() {
             // for each vertex, add curvature vectors
             for (const auto& v : part->get_vertices()) {
                 fvec3 p = v.second->coords;
-                fvec3 k1_end = p + v.second->principal_dir_min * vl;
-                fvec3 k2_end = p + v.second->principal_dir_max * vl;
+                fvec3 k1_end = p + v.second->curvature_data.principal_directions[0] * vl;
+                fvec3 k2_end = p + v.second->curvature_data.principal_directions[1] * vl;
                 // add min curvature vector in red
                 mo_min->add_vector(p, k1_end);
                 // add max curvature vector in green
