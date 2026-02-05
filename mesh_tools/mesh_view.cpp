@@ -97,6 +97,40 @@ void mesh_view::initialize() {
     glEnable(GL_MULTISAMPLE);
 }
 
+/// @brief Updates all renderable objects to match the current arcball rotation.
+/// 
+/// Queries the `arcball` controller for its current orientation, converts it to
+/// Euler angles, and applies that rotation uniformly to:
+/// - The main mesh parts (`m_draw_parts`),
+/// - The face normal visualizations (`m_face_normals`),
+/// - The principal curvature visualizations (`m_model_curvatures_min` and
+///   `m_model_curvatures_max`),
+/// - And the UCS (user coordinate system) view.
+/// 
+/// This keeps the base mesh and all auxiliary overlays visually aligned while
+/// the user interacts with the scene via mouse-driven arcball rotation.
+void mesh_view::update_objects_rotation_and_pan() {
+    quaternion<float> qrot = m_private->m_arcball->get_quaternion();
+    fvec3 ea = make_euler_angles_from_q(qrot);
+    float x_rot = ea.x();
+    float y_rot = ea.y();
+    float z_rot = ea.z();
+
+    for (const auto& part : m_private->m_draw_parts) {
+        part->rotate_to(x_rot, y_rot, z_rot);
+    }
+    for (const auto& part : m_private->m_face_normals) {
+        part->get_prim()->rotate_to(x_rot, y_rot, z_rot);
+    }
+    for (const auto& part : m_private->m_model_curvatures_min) {
+        part->get_prim()->rotate_to(x_rot, y_rot, z_rot);
+    }
+    for (const auto& part : m_private->m_model_curvatures_max) {
+        part->get_prim()->rotate_to(x_rot, y_rot, z_rot);
+    }
+    m_private->m_ucs_view->rotate_ucs_to(x_rot, y_rot, z_rot);
+}
+
 /// @brief Renders the current scene.
 ///
 /// Performs the full rendering pass:
@@ -107,6 +141,8 @@ void mesh_view::initialize() {
 /// - Draws all mesh parts and active visualization overlays (normals and curvature).
 /// - Renders the UCS axes widget on top.
 void mesh_view::render() {
+    update_objects_rotation_and_pan();
+
     // set the viewport to the whole window
     m_private->m_view->set_viewport();
 
@@ -114,11 +150,12 @@ void mesh_view::render() {
     glClearColor(.25f, .25f, .25f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    fmat4 rot_mat(m_private->m_arcball->rotation());
+    fmat4 rot_mat;// (m_private->m_arcball->rotation());
+    rot_mat.loadIdentity();
 
     // combine the view and camera matrices into one
     // these matrices are COLUMN MAJOR!
-    fmat4 cam_matrix = rot_mat * m_private->m_cam->perspective() * m_private->m_view->perspective();
+    fmat4 cam_matrix = /*rot_mat *  */ m_private->m_cam->perspective() * m_private->m_view->perspective();
 
     // enable the shader
     m_private->m_shader->use();
@@ -146,7 +183,7 @@ void mesh_view::render() {
 
     // render coordinate system arrows
     if (m_private->m_ucs_view.get() != nullptr) {
-        m_private->m_ucs_view->render(rot_mat);
+        m_private->m_ucs_view->render();
     }
 }
 

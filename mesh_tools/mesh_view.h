@@ -78,6 +78,15 @@ class mesh_view {
     /// the orientation of the mesh surface.
     void generate_model_normals();
 
+    /// \brief Updates the current rotation and panning offsets of the viewed objects.
+    ///
+    /// Applies any accumulated user interaction (e.g., mouse drag, orbit,
+    /// or pan operations) to the internal camera/object transform state.
+    /// This method is typically invoked from input handlers or the render
+    /// loop to convert raw input deltas into stable rotation and translation
+    /// values used when drawing the mesh.
+    void update_objects_rotation_and_pan();
+
 public:
     /// \brief Constructs a new `mesh_view` with default configuration.
     ///

@@ -86,6 +86,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="arcball.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="graphics_test.h" />
     <ClInclude Include="Resource.h" />

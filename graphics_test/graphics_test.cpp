@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "resource.h"
 #include "graphics_test.h"
+#include "arcball.h"
 
 #undef min
 #undef max
@@ -73,12 +74,15 @@ class graphics_test :public gl_application {
     std::unique_ptr<gl_prim> m_torus;
 
     std::unique_ptr < gl_light> m_light;
+
+    std::unique_ptr<arcball> m_arcball;           ///< Arcball for mouse interaction
 public:
     /**
      * @brief Constructor. Initializes the viewport.
      */
     graphics_test() {
         m_view.reset(new gl_viewport());
+        m_arcball.reset(new arcball(1200, 700));
     }
 
     /**
@@ -267,6 +271,7 @@ public:
      */
     virtual void resize_window(int width, int height) {
         m_view->set_window_aspect(width, height);
+        m_arcball->resize((float)width, (float)height);
     }
 
     /**
@@ -287,6 +292,61 @@ public:
         return 1;
     }
 
+    /// @brief Handles mouse move events while interacting with the mesh view.
+    ///
+    /// Updates the arcball controller with the current cursor position to continuously
+    /// update the view rotation during an active drag operation.
+    ///
+    /// @param x     Current mouse X position in window/client coordinates.
+    /// @param y     Current mouse Y position in window/client coordinates.
+    /// @param extra Additional mouse state flags (currently unused).
+    void onMouseMove(int x, int y, unsigned __int64 extra) {
+        m_arcball->drag(float(x), float(y));
+        quaternion<float> qrot = m_arcball->get_quaternion();
+        fvec3 ea = make_euler_angles_from_q(qrot);
+        float x_rot = ea.x();
+        float y_rot = ea.y();
+        float z_rot = ea.z();
+
+        m_ucs->rotate_to(x_rot, y_rot, z_rot);
+        m_cone->rotate_to(x_rot, y_rot, z_rot);
+        m_cube->rotate_to(x_rot, y_rot, z_rot);
+        m_cylinder->rotate_to(x_rot, y_rot, z_rot);
+        m_dodeca->rotate_to(x_rot, y_rot, z_rot);
+        m_icosa->rotate_to(x_rot, y_rot, z_rot);
+        m_octa->rotate_to(x_rot, y_rot, z_rot);
+        m_penta->rotate_to(x_rot, y_rot, z_rot);
+        m_plane->rotate_to(x_rot, y_rot, z_rot);
+        m_sphere->rotate_to(x_rot, y_rot, z_rot);
+        m_tetra->rotate_to(x_rot, y_rot, z_rot);
+        m_torus->rotate_to(x_rot, y_rot, z_rot);
+
+    }
+
+    /// @brief Handles left mouse button press to start an arcball rotation.
+    ///
+    /// Captures the initial mouse position and notifies the arcball controller that
+    /// a drag operation has started, enabling interactive rotation of the mesh view.
+    ///
+    /// @param x     Mouse X position at the time of button press.
+    /// @param y     Mouse Y position at the time of button press.
+    /// @param extra Additional mouse state flags (currently unused).
+    void onLMouseDown(int x, int y, unsigned __int64 extra) {
+        m_arcball->beginDrag(float(x), float(y));
+    }
+
+    /// @brief Handles left mouse button release to end an arcball rotation.
+    ///
+    /// Signals the arcball controller to finalize the current drag operation, freezing
+    /// the current view rotation until a new drag is started.
+    ///
+    /// @param x     Mouse X position at the time of button release (unused).
+    /// @param y     Mouse Y position at the time of button release (unused).
+    /// @param extra Additional mouse state flags (currently unused).
+    void onLMouseUp(int x, int y, unsigned __int64 extra) {
+        m_arcball->endDrag();
+    }
+    
     /**
      * @brief Handles mouse movement events.
      *
@@ -296,7 +356,7 @@ public:
      * @param dy Change in y position.
      * @param extra_btn Mouse button state.
      */
-    virtual void onMouseMove(int dx, int dy, WPARAM extra_btn) {
+    virtual void old_onMouseMove(int dx, int dy, WPARAM extra_btn) {
         if (extra_btn & MK_LBUTTON) {
             m_ucs->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
             m_cone->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);

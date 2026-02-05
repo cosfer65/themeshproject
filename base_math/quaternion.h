@@ -127,12 +127,11 @@ namespace base_math {
 
         /**
          * @brief Multiplies two quaternions.
-         * @param q1 First quaternion.
          * @param q2 Second quaternion.
          * @return Product quaternion.
          */
         template <typename T>
-        quaternion<T> operator * (/*const quaternion<T>& q1,*/ const quaternion<T>& q2) {
+        quaternion<T> operator * (const quaternion<T>& q2) {
             return quaternion(
                 this->w() * q2.w() - this->x() * q2.x() - this->y() * q2.y() - this->z() * q2.z(),
                 this->w() * q2.x() + this->x() * q2.w() + this->y() * q2.z() - this->z() * q2.y(),
@@ -141,6 +140,30 @@ namespace base_math {
         }
     };
 
+    /**
+     * @brief Constructs a unit quaternion from an axis-angle representation.
+     *
+     * Creates a quaternion that represents a rotation of `angle` radians
+     * around the given 3D `axis`. The axis is interpreted as the rotation
+     * axis in 3D space and is expected to be normalized (unit length)
+     * for the resulting quaternion to represent a pure rotation without
+     * additional scaling.
+     *
+     * The quaternion components are computed as:
+     *   - w = cos(angle / 2)
+     *   - (x, y, z) = axis * sin(angle / 2)
+     *
+     * @tparam T Numeric scalar type (e.g., `float`, `double`).
+     * @param axis Rotation axis as a 3D vector. Should be normalized for
+     *             correct rotational behavior.
+     * @param angle Rotation angle in radians, measured around `axis`
+     *              using the right-hand rule.
+     * @return Quaternion representing the specified axis-angle rotation.
+     *
+     * @note If `axis` is not normalized, the resulting quaternion will be
+     *       scaled, and any rotations derived from it may introduce
+     *       non-uniform scaling artifacts.
+     */
     template <typename T>
     inline quaternion<T> fromAxisAngle(const basevector<T, 3>& axis, T angle) {
         T s = T(std::sin(angle * T(0.5)));

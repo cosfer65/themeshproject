@@ -109,7 +109,7 @@ public:
     /// @brief Renders the UCS indicator to the current OpenGL context.
     ///
     /// Typically called once per frame after the main scene has been drawn.
-    void render(const base_math::fmat4& user_rotation);
+    void render();
 
     /// @brief Updates the UCS view to match a new window size.
     ///
