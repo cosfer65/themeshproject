@@ -126,6 +126,7 @@ UCS_view::UCS_view() {
     // Allocate the private implementation and initialize the viewport container.
     m_private_data = new UCS_view_private;
     m_private_data->m_view.reset(new gl_viewport());
+    m_rotation.loadIdentity(); // Initialize the user rotation to identity (no rotation).
 }
 
 UCS_view::~UCS_view() {
@@ -176,6 +177,7 @@ void UCS_view::render() {
     m_private_data->m_shader->set_mat4("camera", cam_matrix);
     m_private_data->m_shader->set_vec3("cameraPos", m_private_data->m_cam->vLocation);
     m_private_data->m_shader->set_int("object_or_vertex_color", 0);  // use object color
+    m_private_data->m_ucs->view_matrix = m_rotation; // apply user rotation
     m_private_data->m_ucs->render(m_private_data->m_shader.get());
     m_private_data->m_shader->end();
 }
@@ -214,4 +216,8 @@ void UCS_view::rotate_ucs_by(float x, float y, float z) {
 /// predefined views).
 void UCS_view::rotate_ucs_to(float x, float y, float z) {
     m_private_data->m_ucs->rotate_to(x, y, z);// fvec3(x, y, z));
+}
+
+void UCS_view::set_user_rotation(const fmat4& R) {
+    m_rotation = R;
 }

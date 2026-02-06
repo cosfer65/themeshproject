@@ -91,6 +91,7 @@ struct UCS_view_private;
 /// of a local coordinate system, typically rendered as a small axis gizmo.
 class UCS_view {
     UCS_view_private* m_private_data; ///< Opaque pointer to implementation-specific data.
+    base_math::fmat4 m_rotation;                 ///< Current rotation matrix for the UCS, stored in column-major order.
 public:
     /// @brief Constructs an uninitialized UCS view.
     ///
@@ -133,6 +134,8 @@ public:
     /// @param y Target rotation around the Y-axis, in degrees (or radians, implementation-defined).
     /// @param z Target rotation around the Z-axis, in degrees (or radians, implementation-defined).
     void rotate_ucs_to(float x, float y, float z);
+
+    void set_user_rotation(const base_math::fmat4& R);
 };
 
 

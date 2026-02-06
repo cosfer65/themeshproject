@@ -392,6 +392,74 @@ namespace base_math {
     }
 
     /**
+     * @brief Extracts Euler angles from a 3x3 rotation matrix.
+     *
+     * Interprets the input array `R` as a 3x3 rotation matrix stored in
+     * row-major order:
+     *
+     *   R = [ r00 r01 r02
+     *         r10 r11 r12
+     *         r20 r21 r22 ]
+     *
+     * The function assumes a rotation order consistent with the rest of this
+     * module (yaw–pitch–roll convention) and returns the three Euler angles
+     * (stored in a `basevector<T, 3>`) in radians:
+     *
+     *   - `e.x()` : yaw angle
+     *   - `e.y()` : pitch angle
+     *   - `e.z()` : roll angle
+     *
+     * It computes the pitch from element r02 and then derives yaw and roll
+     * from the remaining elements. When the cosine of the pitch angle is
+     * close to zero (i.e., pitch is near ±90 degrees), the function detects
+     * gimbal lock and switches to an alternative computation path to avoid
+     * numerical instability. In this singular case, roll is set to zero and
+     * yaw is derived from r10 and r11.
+     *
+     * @tparam T Numeric scalar type (e.g., `float`, `double`).
+     * @param R Pointer to an array of at least 9 elements representing a 3x3
+     *          rotation matrix in row-major layout.
+     * @return `basevector<T, 3>` containing the Euler angles in radians:
+     *         `(yaw, pitch, roll)`.
+     *
+     * @note The input matrix is assumed to be a valid rotation matrix
+     *       (orthonormal with determinant +1). Invalid or noisy matrices may
+     *       produce undefined or unstable angle outputs.
+     */
+    template <typename T>
+    inline basevector<T,3> eulerAnglesFromRotationMatrix(const T* R)
+    {
+        basevector<T, 3> e;
+
+        // Extract matrix elements for readability
+        const T r00 = R[0], r01 = R[1], r02 = R[2];
+        const T r10 = R[3], r11 = R[4], r12 = R[5];
+        const T r20 = R[6], r21 = R[7], r22 = R[8];
+
+        // Pitch (around Y)
+        e.y() = T(std::asin(r02));
+
+        // Check for gimbal lock
+        const T cos_pitch = T(std::cos(e.y()));
+
+        if (std::fabs(cos_pitch) > 1e-6)
+        {
+            // Standard case
+            e.x() = T(std::atan2(-r01, r00));  // yaw
+            e.z() = T(std::atan2(-r12, r22));  // roll
+        }
+        else
+        {
+            // Gimbal lock: pitch is ±90 degrees
+            e.x() = T(std::atan2(r10, r11));
+            e.z() = T(0.0);
+        }
+
+        return e;
+    }
+
+
+    /**
      * @brief Typedef for float quaternion.
      */
     typedef quaternion<float> fquaternion;

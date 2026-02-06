@@ -228,6 +228,23 @@ public:
         glClearColor(.25f, .25f, .25f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Convert the arcball's current rotation quaternion into a rotation matrix
+        fmat4 rot_mat(m_arcball->rotation());
+
+        // Update the view matrix of all primitives to match the arcball's rotation
+        m_ucs->view_matrix = rot_mat;
+        m_cone->view_matrix = rot_mat;
+        m_cube->view_matrix = rot_mat;
+        m_cylinder->view_matrix = rot_mat;
+        m_dodeca->view_matrix = rot_mat;
+        m_icosa->view_matrix = rot_mat;
+        m_octa->view_matrix = rot_mat;
+        m_penta->view_matrix = rot_mat;
+        m_plane->view_matrix = rot_mat;
+        m_sphere->view_matrix = rot_mat;
+        m_tetra->view_matrix = rot_mat;
+        m_torus->view_matrix = rot_mat;
+
         // combine the view and camera matrices into one
         // these matrices are COLUMN MAJOR!
         fmat4 cam_matrix = m_cam->perspective() * m_view->perspective();
@@ -302,25 +319,6 @@ public:
     /// @param extra Additional mouse state flags (currently unused).
     void onMouseMove(int x, int y, unsigned __int64 extra) {
         m_arcball->drag(float(x), float(y));
-        quaternion<float> qrot = m_arcball->get_quaternion();
-        fvec3 ea = make_euler_angles_from_q(qrot);
-        float x_rot = ea.x();
-        float y_rot = ea.y();
-        float z_rot = ea.z();
-
-        m_ucs->rotate_to(x_rot, y_rot, z_rot);
-        m_cone->rotate_to(x_rot, y_rot, z_rot);
-        m_cube->rotate_to(x_rot, y_rot, z_rot);
-        m_cylinder->rotate_to(x_rot, y_rot, z_rot);
-        m_dodeca->rotate_to(x_rot, y_rot, z_rot);
-        m_icosa->rotate_to(x_rot, y_rot, z_rot);
-        m_octa->rotate_to(x_rot, y_rot, z_rot);
-        m_penta->rotate_to(x_rot, y_rot, z_rot);
-        m_plane->rotate_to(x_rot, y_rot, z_rot);
-        m_sphere->rotate_to(x_rot, y_rot, z_rot);
-        m_tetra->rotate_to(x_rot, y_rot, z_rot);
-        m_torus->rotate_to(x_rot, y_rot, z_rot);
-
     }
 
     /// @brief Handles left mouse button press to start an arcball rotation.
@@ -345,46 +343,6 @@ public:
     /// @param extra Additional mouse state flags (currently unused).
     void onLMouseUp(int x, int y, unsigned __int64 extra) {
         m_arcball->endDrag();
-    }
-    
-    /**
-     * @brief Handles mouse movement events.
-     *
-     * Rotates primitives based on mouse movement and button state.
-     *
-     * @param dx Change in x position.
-     * @param dy Change in y position.
-     * @param extra_btn Mouse button state.
-     */
-    virtual void old_onMouseMove(int dx, int dy, WPARAM extra_btn) {
-        if (extra_btn & MK_LBUTTON) {
-            m_ucs->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_cone->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_cube->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_cylinder->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_dodeca->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_icosa->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_octa->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_penta->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_plane->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_sphere->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_tetra->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-            m_torus->rotate_by(dtr(dy / 5.f), dtr(dx / 5.f), 0);
-        }
-        if (extra_btn & MK_RBUTTON) {
-            m_ucs->rotate_by(0, 0, dtr(dy / 5.f));
-            m_cone->rotate_by(0, 0, dtr(dy / 5.f));
-            m_cube->rotate_by(0, 0, dtr(dy / 5.f));
-            m_cylinder->rotate_by(0, 0, dtr(dy / 5.f));
-            m_dodeca->rotate_by(0, 0, dtr(dy / 5.f));
-            m_icosa->rotate_by(0, 0, dtr(dy / 5.f));
-            m_octa->rotate_by(0, 0, dtr(dy / 5.f));
-            m_penta->rotate_by(0, 0, dtr(dy / 5.f));
-            m_plane->rotate_by(0, 0, dtr(dy / 5.f));
-            m_sphere->rotate_by(0, 0, dtr(dy / 5.f));
-            m_tetra->rotate_by(0, 0, dtr(dy / 5.f));
-            m_torus->rotate_by(0, 0, dtr(dy / 5.f));
-        }
     }
 
     /**

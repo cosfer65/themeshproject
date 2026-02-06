@@ -257,6 +257,7 @@ namespace base_opengl {
             // position object
             fmat4 ob_matrix = tmat * rmat * smat;
             ob_matrix = ob_matrix.transpose();    // convert for OpenGL!
+            ob_matrix = view_matrix * ob_matrix;
 
             // pass transformation to shader
             _shader->set_mat4("model", ob_matrix);

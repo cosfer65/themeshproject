@@ -54,6 +54,8 @@ namespace base_opengl {
 		fmat4 rmat;  ///< Local rotation matrix.
 		fmat4 tmat;  ///< Translation matrix.
 		fmat4 smat;  ///< Scaling matrix.
+		bool force_black;        ///< If true, forces the primitive to render in black (e.g., for wireframe).
+        fmat4 view_matrix; ///< View matrix for the primitive (optional, can be set externally).
 
 		/**
 		 * @brief Constructs a gl_prim with default transformation and rendering state.
@@ -74,6 +76,8 @@ namespace base_opengl {
 			m_texture = 0;
             m_material = nullptr;
             m_color = fvec3(0.8f, 0.8f, 0.8f);
+            force_black = false;
+            view_matrix.loadIdentity();
 		}
 
 		/**
@@ -133,7 +137,10 @@ namespace base_opengl {
 			if (!vao) return;
 
             _shader->set_int("object_or_vertex_color", 0);  // object color by default
-			_shader->set_vec4("object_color", fvec4(m_color, 1));
+			if (force_black)
+				_shader->set_vec4("object_color", fvec4(0, 0, 0, 1)); // black for wireframe
+            else
+				_shader->set_vec4("object_color", fvec4(m_color, 1));
 			if (use_vertex_color) {
                 _shader->set_int("object_or_vertex_color", 1); // use per-vertex color
 			}
@@ -145,6 +152,7 @@ namespace base_opengl {
 			// position object
 			fmat4 ob_matrix = tmat * rmat * smat;
 			ob_matrix = ob_matrix.transpose();    // convert to column wise for OpenGL!
+			ob_matrix = view_matrix * ob_matrix;
 
 			// pass transformation to shader
 			_shader->set_mat4("model", ob_matrix);
