@@ -89,7 +89,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="glew.c" />
-    <ClCompile Include="gl_camera.cpp" />
     <ClCompile Include="gl_font.cpp" />
     <ClCompile Include="gl_math.cpp" />
     <ClCompile Include="gl_mesh.cpp" />

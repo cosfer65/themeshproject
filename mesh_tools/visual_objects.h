@@ -21,7 +21,6 @@ namespace base_opengl {
 class visual_objects {
     base_opengl::gl_mesh* m_mesh; ///< Pointer to the associated simple mesh.
     base_opengl::gl_prim* m_prim; ///< Pointer to the associated OpenGL primitive.
-    bool m_visible;    ///< Visibility flag for the miscellaneous objects.
 public:
     /// @brief Constructs an empty visual object container with no mesh/primitive attached.
     ///
@@ -70,13 +69,6 @@ public:
     ///
     /// @param sh Shader program to use when drawing the underlying primitive.
     void render(base_opengl::gl_shader* sh);
-
-    /// @brief Toggles the visibility state of the visual objects.
-    ///
-    /// When visibility is disabled, `render()` should skip drawing.
-    void toggle_visibility() {
-        m_visible = !m_visible;
-    }
 };
 
 /// @brief Forward declaration of implementation details for `UCS_view`.
@@ -121,20 +113,18 @@ public:
     /// @param height New height of the rendering surface, in pixels.
     void resize_window(int width, int height);
 
-    /// @brief Applies an incremental rotation to the UCS around the X, Y, and Z axes.
+    /// @brief Sets an additional user-defined rotation for the UCS.
     ///
-    /// @param x Rotation delta around the X-axis, in degrees (or radians, implementation-defined).
-    /// @param y Rotation delta around the Y-axis, in degrees (or radians, implementation-defined).
-    /// @param z Rotation delta around the Z-axis, in degrees (or radians, implementation-defined).
-    void rotate_ucs_by(float x, float y, float z);
-
-    /// @brief Sets the absolute orientation of the UCS around the X, Y, and Z axes.
+    /// This rotation is typically combined with the internally maintained
+    /// UCS orientation (e.g., derived from camera or model transforms) to
+    /// allow the user to manually adjust how the UCS gizmo is oriented.
     ///
-    /// @param x Target rotation around the X-axis, in degrees (or radians, implementation-defined).
-    /// @param y Target rotation around the Y-axis, in degrees (or radians, implementation-defined).
-    /// @param z Target rotation around the Z-axis, in degrees (or radians, implementation-defined).
-    void rotate_ucs_to(float x, float y, float z);
-
+    /// Use this to override or augment the default UCS orientation based on
+    /// user interaction such as trackball rotation, arcball controls, or
+    /// explicit matrix edits.
+    ///
+    /// @param R Rotation matrix to apply to the UCS, in the same coordinate
+    ///          space and layout convention as `m_rotation` (column-major).
     void set_user_rotation(const base_math::fmat4& R);
 };
 

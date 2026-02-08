@@ -227,6 +227,13 @@ namespace base_math {
             }
             return res;
         }
+        /// inplace Scalar multiplication
+        basevector<T, C>& operator*=(T v) {
+            for (size_t i = 0; i < C; ++i) {
+                this->data[i] *= v;
+            }
+            return *this;
+        }
 
         /// Negation operator. return Negated vector.
         basevector<T, C> operator-(void) {
@@ -284,6 +291,11 @@ namespace base_math {
             m[0] * v.x() + m[1] * v.y() + m[2] * v.z(),
             m[4] * v.x() + m[5] * v.y() + m[6] * v.z(),
             m[8] * v.x() + m[9] * v.y() + m[10] * v.z());
+    }
+
+    template <typename T>
+    basevector<T, 3> operator*(T s, const basevector<T, 3>& v) {
+        return v * s;
     }
 
     /// Convenience wrapper to rotate a 3D vector with a 4x4 matrix (uses operator* above).

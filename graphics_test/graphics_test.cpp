@@ -55,8 +55,8 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 class graphics_test :public gl_application {
     char m_szTitle[MAX_LOADSTRING];                  ///< The title bar text
 
-    std::unique_ptr<gl_viewport> m_view;            ///< Viewport for rendering
-    std::unique_ptr<gl_camera> m_cam;               ///< Camera for the scene
+    // std::unique_ptr<gl_viewport> m_view;            ///< Viewport for rendering
+    std::unique_ptr<gl_camera> m_cam;               ///< gl_camera for the scene
     std::unique_ptr<gl_shader> m_shader;            ///< Shader used for rendering
 
     // Primitives to render
@@ -81,7 +81,8 @@ public:
      * @brief Constructor. Initializes the viewport.
      */
     graphics_test() {
-        m_view.reset(new gl_viewport());
+        m_cam.reset(new gl_camera(fvec3(0, 0, 50), fvec3(0, 0, 0), fvec3(0, 1, 0)));
+        //m_view.reset(new gl_viewport());
         m_arcball.reset(new arcball(1200, 700));
     }
 
@@ -127,9 +128,7 @@ public:
      */
     virtual int init_application() {
         // zoom is the angle of the field of view
-        m_view->set_fov(dtr<float>(20));
-        // camera position, look at point, and up vector orientation
-        m_cam.reset(new gl_camera(fvec3(0, 0, 50), fvec3(0, 0, 0), fvec3(0, 1, 0)));
+        m_cam->set_fov(dtr<float>(20));
 
         // create the basic shader
         m_shader.reset(new gl_shader);
@@ -222,7 +221,7 @@ public:
      */
     virtual void render() {
         // set the viewport to the whole window
-        m_view->set_viewport();
+        m_cam->set_viewport();
 
         // clear screen
         glClearColor(.25f, .25f, .25f, 1.f);
@@ -247,7 +246,7 @@ public:
 
         // combine the view and camera matrices into one
         // these matrices are COLUMN MAJOR!
-        fmat4 cam_matrix = m_cam->perspective() * m_view->perspective();
+        fmat4 cam_matrix = m_cam->perspective();
 
         // enable the shader
         m_shader->use();
@@ -287,7 +286,8 @@ public:
      * @param height New window height.
      */
     virtual void resize_window(int width, int height) {
-        m_view->set_window_aspect(width, height);
+        m_cam->set_aspect(width, height);
+        // m_view->set_window_aspect(width, height);
         m_arcball->resize((float)width, (float)height);
     }
 

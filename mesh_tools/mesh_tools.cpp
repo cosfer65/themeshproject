@@ -196,6 +196,14 @@ public:
         m_mesh_view->resize(width, height);
     }
 
+    virtual void onRMouseDown(int x, int y, unsigned __int64 extra) {
+        m_mesh_view->onRMouseDown(x, y, extra);
+    }
+    virtual void onRMouseUp(int x, int y, unsigned __int64 extra) {
+        m_mesh_view->onRMouseUp(x, y, extra);
+    }
+
+
 };
 
 /// @brief Global application instance.

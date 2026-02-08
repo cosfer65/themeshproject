@@ -95,7 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="model.cpp" />
-    <ClCompile Include="mt_curvature.cpp" />
+    <ClCompile Include="curvature.cpp" />
     <ClCompile Include="mesh_tools.cpp" />
     <ClCompile Include="mesh_view.cpp" />
     <ClCompile Include="visual_objects.cpp" />

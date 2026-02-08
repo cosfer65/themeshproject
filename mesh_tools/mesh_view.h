@@ -9,6 +9,16 @@
 #ifndef __mesh_view_h__
 #define __mesh_view_h__
 
+#include "matrix.h"
+// #include "gl_shaders.h"
+
+// namespace base_math {
+//     class fmat4; ///< Forward declaration of a 4x4 float matrix class.
+// }
+namespace base_opengl {
+    class gl_shader; ///< Forward declaration of an OpenGL shader wrapper class.
+}
+
 /// \brief Forward declaration of the private implementation for `mesh_view`.
 ///
 /// The `mesh_view_private` struct contains the internal data structures and
@@ -16,6 +26,12 @@
 /// from users of this header to keep the public interface minimal and to reduce
 /// compile-time dependencies (PIMPL idiom).
 struct mesh_view_private;
+
+struct view_state {
+    bool show_wireframe = false;  ///< Whether to render the mesh in wireframe mode.
+    bool show_curvature = false; ///< Whether to visualize curvature directions.
+    bool show_normals = false;   ///< Whether to visualize face normals.
+};
 
 /// \brief Viewer and controller for displaying and interacting with a 3D mesh.
 ///
@@ -39,14 +55,13 @@ class mesh_view {
     /// All heavy state (mesh data, OpenGL objects, shaders, etc.) is stored
     /// in this private object. This keeps the header stable and reduces
     /// rebuilds when implementation details change.
-    mesh_view_private* m_private;                     ///< Private implementation details
+    mesh_view_private* m_private;                    ///< Private implementation details
 
-    /// \brief Field of view, in degrees, for the perspective projection.
-    ///
-    /// This value controls how "zoomed in" the view is. It is adjusted by
-    /// mouse wheel events in `mouse_wheel()` and used when configuring the
-    /// camera/projection matrix during rendering.
-    float fov = 15.f;                                 ///< Field of view in degrees (changed with mouse wheel and affects zoom)
+    view_state m_view_state;                         ///< Current visualization state (e.g., whether to show curvature or normals)
+
+    bool dragging = false;                           ///< Indicates whether the user is currently dragging with the mouse (for panning)
+    int last_mouse_x = 0;                            ///< Last recorded mouse X position (used for calculating deltas during dragging)
+    int last_mouse_y = 0;                            ///< Last recorded mouse Y position (used for calculating deltas during dragging)
 
     /// \brief Indicates whether mouse events should currently be ignored.
     ///
@@ -108,6 +123,21 @@ public:
     /// shaders, vertex buffers, and any other GPU-side state required by
     /// the view.
     void initialize();
+
+    /// \brief Renders the 3D scene using externally provided camera and rotation matrices.
+    ///
+    /// \param cam_matrix Reference to a 4x4 camera/view matrix that defines the camera's
+    ///                   position and orientation in the scene.
+    /// \param rot_mat    Reference to a 4x4 rotation matrix that controls the orientation
+    ///                   of the mesh being rendered.
+    /// \param shdr       Pointer to the OpenGL shader program to use for rendering the scene.
+    ///
+    /// This is an advanced rendering method that allows external control over the
+    /// camera transformation, object rotation, and shader selection. Unlike `render()`,
+    /// which uses internal camera state and default shaders, this method accepts
+    /// pre-configured matrices and shader, making it suitable for multi-pass rendering,
+    /// custom camera setups, or integration with external rendering pipelines.
+    void render_scene(base_math::fmat4& cam_matrix, base_math::fmat4& rot_mat, base_opengl::gl_shader* shdr);
 
     /// \brief Renders the currently loaded mesh to the active render target.
     ///
@@ -192,6 +222,11 @@ public:
     /// the displayed mesh. When `block_mouse_event` is `true`, the event
     /// may be ignored until interaction is re-enabled.
     void onMouseWheel(int delta, unsigned __int64 extra_btn);
+
+
+    void onRMouseDown(int x, int y, unsigned __int64 extra);
+    void onRMouseUp(int x, int y, unsigned __int64 extra);
+
 };
 
 #endif // __mesh_view_h__

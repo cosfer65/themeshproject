@@ -115,6 +115,15 @@ public:
         return m_rotation;
     }
 
+    /// \brief Reset the accumulated rotation to the identity (no rotation).
+    ///
+    /// Sets the internal quaternion to (1, 0, 0, 0), effectively clearing all
+    /// rotation applied through drag operations and returning to the initial
+    /// orientation.
+    void reset() {
+        m_rotation = quaternion<float>(1, 0, 0, 0);
+    }
+
 private:
     /// \brief Flag indicating whether a drag operation is active.
     bool dragging;

@@ -44,7 +44,7 @@
     <ClCompile Include="mesh_view.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mt_curvature.cpp">
+    <ClCompile Include="curvature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="model.cpp">
