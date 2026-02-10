@@ -167,13 +167,25 @@ namespace base_opengl {
         ///
         /// \param dx Horizontal pan amount (screen space units).
         /// \param dy Vertical pan amount (screen space units).
-        void pan(float dx, float dy) {
-            float s = distance() * 0.002f;
+        void pan(float dx, float dy)
+        {
+            // Distance from camera to target (the point you're orbiting around)
+            float d = distance();
 
-            base_math::fvec3 delta = (-dx * right() + dy * upVec()) * s;
-            delta *= 0.1f; // adjust the pan speed
-            location += delta;
-            target += delta;
+            // World-space height of the viewport at distance d
+            float screenHeight = 2.0f * d * tanf(fov * 0.5f);
+
+            // World units per pixel
+            float worldPerPixel = screenHeight / height;
+
+            // Compute world-space pan
+            fvec3 pan =
+                (-dx * worldPerPixel) * right() +
+                (dy * worldPerPixel) * upVec();
+
+            // Apply translation
+            location += pan;
+            target += pan;
         }
 
         void zoom(float delta) {
