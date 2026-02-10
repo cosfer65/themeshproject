@@ -24,12 +24,14 @@ namespace base_opengl {
      * Contains vertex, normal, and index counts, as well as the corresponding data arrays.
      */
     struct mesh_data {
-        size_t num_vertices;                ///< Number of vertices in the mesh.
-        size_t num_normals;                 ///< Number of normals in the mesh.
-        size_t num_indices;                 ///< Number of indices in the mesh.
+        size_t num_vertices=0;                ///< Number of vertices in the mesh.
+        size_t num_normals=0;                 ///< Number of normals in the mesh.
+        size_t num_indices=0;                 ///< Number of indices in the mesh.
+        size_t num_curvatures=0;              ///< Number of curvature values (if available).
         std::vector<float> vertices;        ///< Flat array of vertex positions (x, y, z).
         std::vector<float> normals;         ///< Flat array of normal vectors (x, y, z).
         std::vector<unsigned int> indices;  ///< Indices defining mesh faces.
+        std::vector<float> curvatures;      ///< Optional array of curvature values per vertex (if available).
     };
 
     /**
@@ -42,8 +44,7 @@ namespace base_opengl {
     public:
         std::vector<fvec3> vertices;         ///< List of vertex positions.
         std::vector<fvec3> normals;          ///< List of normal vectors.
-        std::vector<unsigned int> indices;  ///< Indices for mesh faces.
-        std::vector<fvec2> texcoords;        ///< Texture coordinates for each vertex.
+        std::vector<unsigned int> indices;   ///< Indices for mesh faces.
 
         /**
          * @brief Default constructor.
@@ -99,15 +100,6 @@ namespace base_opengl {
         void addIndices(unsigned int i1, unsigned int i2) {
             indices.push_back(i1);
             indices.push_back(i2);
-        }
-
-        /**
-         * @brief Adds a texture coordinate to the mesh.
-         * @param u U coordinate.
-         * @param v V coordinate.
-         */
-        void addTexCoord(float u, float v) {
-            texcoords.push_back(fvec2(u, v));
         }
     };
 

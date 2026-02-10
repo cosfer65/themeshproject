@@ -80,6 +80,16 @@ namespace base_opengl {
             view_matrix.loadIdentity();
 		}
 
+		int get_use_vertex_color() const {
+			return use_vertex_color;
+        }
+
+		int set_use_vertex_color(int v) {
+            int ret = use_vertex_color;
+			use_vertex_color = v;
+			return ret;
+        }
+
 		/**
 		 * @brief Virtual destructor.
 		 */

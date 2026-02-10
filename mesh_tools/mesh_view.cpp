@@ -20,6 +20,8 @@
 #include "common_dialogs.h"
 #include "visual_objects.h"
 
+#undef max // avoid conflicts with std::max in some Windows headers
+
 using namespace base_math;
 using namespace base_opengl;
 
@@ -59,6 +61,8 @@ mesh_view::mesh_view() {
     m_private->m_ucs_view.reset(new UCS_view());
     m_private->m_arcball.reset(new arcball(800, 600));
     m_private->m_cam.reset(new gl_camera(fvec3(0, 0, 50), fvec3(0, 0, 0), fvec3(0, 1, 0)));
+
+    m_model_state.m_curvatures_calculated = false;
 }
 
 /// @brief Destroys the `mesh_view` and releases all associated resources.
@@ -93,7 +97,7 @@ void mesh_view::initialize() {
     m_private->m_light->set_specular(fvec3(0.1f));
 
     // OpenGL initialization
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glEnable(GL_MULTISAMPLE);
@@ -135,17 +139,18 @@ void mesh_view::render_scene(fmat4& cam_matrix, fmat4& rot_mat, gl_shader* shdr)
     // render the mesh parts with the current rotation applied
     {
         // render filled polygons first
-        glPolygonMode(GL_FRONT, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
         for (const auto& part : m_private->m_draw_parts) {
             part->set_draw_mode(GL_FILL);
             part->force_black = false;
             part->view_matrix = rot_mat;   // apply the current arcball rotation to the mesh parts
+            part->set_use_vertex_color(m_view_state.show_gauss_map ? 1 : 0); // ensure vertex color is disabled by default
             part->render(shdr);
         }
         if (m_view_state.show_wireframe) {
             // then render wireframe on top
-            glPolygonMode(GL_FRONT, GL_LINE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glEnable(GL_POLYGON_OFFSET_LINE);
             glPolygonOffset(-1.0f, -1.0f); // pull lines toward camera
             for (const auto& part : m_private->m_draw_parts) {
@@ -192,7 +197,7 @@ void mesh_view::render_scene(fmat4& cam_matrix, fmat4& rot_mat, gl_shader* shdr)
 /// - If a UCS view is available, applies the same rotation so its axes match the
 ///   mesh orientation and renders the UCS overlay in screen space.
 ///
-// This method is intended to be called once per frame from the main render loop.
+/// This method is intended to be called once per frame from the main render loop.
 void mesh_view::render() {
     m_private->m_cam->set_viewport();
     glClearColor(.25f, .25f, .25f, 1.f);
@@ -236,6 +241,7 @@ void mesh_view::render() {
 /// they can be rendered alongside the mesh in `render_scene()`.
 void mesh_view::generate_model_curvature_view() {
     m_view_state.show_curvature = false; // ensure curvature visualization is disbled while we rebuild it
+
     m_private->m_model_curvatures_min.clear();
     m_private->m_model_curvatures_max.clear();
     if (m_private->m_model) {
@@ -266,10 +272,33 @@ void mesh_view::generate_model_curvature_view() {
             m_private->m_model_curvatures_min.push_back(std::move(mo_min));
             m_private->m_model_curvatures_max.push_back(std::move(mo_max));
         }
-        m_view_state.show_curvature = true; // enable curvature visualization after it has been generated
     }
 }
 
+/// @brief Generates or refreshes the Gauss curvature color map for the current model.
+///
+/// This method prepares per-vertex Gauss curvature for visualization by:
+/// - Checking that a model is loaded and that the Gauss curvature view has not
+///   already been generated for the current curvature state.
+/// - Normalizing the absolute Gauss curvature values of all vertices into the
+///   [0, 1] range via `model::normalize_absolute_curvature()`. The normalized
+///   values are typically stored per vertex and later interpreted as colors
+///   (e.g. for a heat map) in the rendering pipeline.
+/// - Rebuilding the mesh GPU representation by calling `build_model_representation()`
+///   so that any curvature-dependent vertex colors are uploaded to the graphics
+///   primitives used for rendering.
+///
+/// After successful generation, the flag `m_gauss_curvature_view_generated` is
+/// set to `true` to avoid redundant recomputation until curvature data changes.
+void mesh_view::generate_model_gauss_curvature_view() {
+    if (m_private->m_model && !m_model_state.m_gauss_curvature_view_generated) {
+        // normalize absolut Gauss curvature values to [0, 1] range for visualization
+        m_private->m_model->normalize_absolute_curvature();
+        // rebuild the mesh representation to update vertex colors based on the new curvature values
+        build_model_representation(); 
+        m_model_state.m_gauss_curvature_view_generated = true;
+    }
+}
 
 /// @brief Triggers curvature computation for the current model and updates its visualization.
 ///
@@ -290,6 +319,8 @@ void mesh_view::do_curvature_calculation() {
         compute_vertex_curvatures(part);
     }
     generate_model_curvature_view();
+    m_model_state.m_curvatures_calculated = true;
+    m_model_state.m_gauss_curvature_view_generated = false;
 }
 
 /// @brief Generates per-face normal visualization for the current model.
@@ -387,12 +418,43 @@ bool mesh_view::load_new_model(const char* fnm) {
     // reset arcball rotation
     m_private->m_arcball->reset();
 
-    m_private->m_model.reset(load_model(fnm));
-    m_private->m_draw_parts.clear();
+    m_model_state.m_curvatures_calculated = false;
 
-    m_view_state.show_curvature = false; // disable curvature visualization until it is regenerated for the new model
-    m_view_state.show_normals = false;   // disable normals visualization until it is regenerated for the new model
-    m_view_state.show_wireframe = false;  // disable wireframe visualization until the user toggles it
+    m_private->m_model.reset(load_model(fnm));
+
+    m_view_state.set_model_changed();  // disable cached view states that depend on the model (e.g. curvature visualization) until they are regenerated
+
+    build_model_representation();
+
+    m_private->m_model_curvatures_min.clear();
+    m_private->m_model_curvatures_max.clear();
+    generate_model_normals();
+    return m_private->m_model != nullptr;
+}
+
+/// @brief Rebuilds the GPU-backed representation of the currently loaded model.
+///
+/// Clears and recreates the collection of drawable OpenGL primitives (`m_draw_parts`)
+/// from the logical mesh model stored in `m_model`.
+///
+/// Behavior:
+/// - Empties `m_draw_parts` so that any previous mesh geometry is discarded.
+/// - If a model is present:
+///   - Retrieves all `half_edge_mesh` parts via `model::get_parts()`.
+///   - Reserves space in `m_draw_parts` to avoid repeated reallocations.
+///   - For each mesh part:
+///     - Populates a local `mesh_data` instance using `collect_mesh_data()`,
+///       which extracts vertex positions, indices, normals, and any auxiliary
+///       attributes required for rendering.
+///     - Allocates a new `gl_prim`, initializes it from the collected mesh data
+///       by calling `gl_prim::create_from_mesh(&md, GL_FILL)`, and stores the
+///       resulting primitive in `m_draw_parts`.
+///
+/// The resulting primitives are used by the rendering pipeline (e.g. in
+/// `render_scene()`) to draw the mesh in filled-polygon mode, and may later be
+/// reused for additional passes (such as wireframe overlay or curvature coloring).
+void mesh_view::build_model_representation() {
+    m_private->m_draw_parts.clear();
 
     if (m_private->m_model) {
         const auto& parts = m_private->m_model->get_parts();
@@ -406,10 +468,7 @@ bool mesh_view::load_new_model(const char* fnm) {
             m_private->m_draw_parts.push_back(std::move(prim));
         }
     }
-    m_private->m_model_curvatures_min.clear();
-    m_private->m_model_curvatures_max.clear();
-    generate_model_normals();
-    return m_private->m_model != nullptr;
+
 }
 
 /// @brief Handles high-level mesh view commands dispatched from the application UI.
@@ -447,12 +506,26 @@ int mesh_view::onCommand(int cmd) {
         break;
 
     case ID_VIEW_PRINCIPALCURVATURES:
+        if (m_model_state.m_curvatures_calculated == false) {
+            MessageBox(NULL, "Curvature must be calculated before generating the curvature view.", "Error", MB_ICONERROR);
+            return 1;
+        }
         m_view_state.show_curvature = !m_view_state.show_curvature;
         break;
 
     case ID_VIEW_MESH:
         m_view_state.show_wireframe = !m_view_state.show_wireframe;
         break;
+
+    case ID_VIEW_GAUSSCURVATURE:
+        if (m_model_state.m_curvatures_calculated == false) {
+            MessageBox(NULL, "Curvature must be calculated before generating the Gauss curvature view.", "Error", MB_ICONERROR);
+            return 1;
+        }
+        generate_model_gauss_curvature_view();
+        m_view_state.show_gauss_map = !m_view_state.show_gauss_map;
+
+        break;        
 
     case ID_MESH_CURVATURE:
         do_curvature_calculation();

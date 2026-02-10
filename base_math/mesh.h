@@ -131,6 +131,8 @@ namespace base_math {
         T meanCurvature;
         /// Gaussian curvature K = k_min * k_max.
         T gaussCurvature;
+        /// absolute value of Gaussian curvature.
+        T absGaussCurvature;
         /// Sign of Gaussian curvature K (e.g., -1 for saddle, 0 for flat, 1 for elliptic).
         int signGauss;
         /// Sign of mean curvature H (e.g., -1 for concave, 0 for minimal, 1 for convex).
@@ -311,6 +313,9 @@ namespace base_math {
             f->v2 = te[1];
             f->v3 = te[0];
         }
+
+        bool m_curvatures_computed = false;
+
     public:
         T total_edge_length = T(0);
         // average_edge_length: is the mean length of edges, useful for scale - dependent algorithms
@@ -327,9 +332,24 @@ namespace base_math {
         std::map<size_t, face<T>*> faces;
 
         /// Default constructor.
-        half_edge_mesh() {};
+        half_edge_mesh() : m_curvatures_computed(false) {};
         /// Default destructor (does not free heap-allocated vertices/edges/faces).
-        ~half_edge_mesh() {};
+        ~half_edge_mesh() { cleanup(); };
+
+        void cleanup() {
+            for (auto& v_pair : vertices) {
+                delete v_pair.second;
+            }
+            for (auto& he_pair : half_edges) {
+                delete he_pair.second;
+            }
+            for (auto& f_pair : faces) {
+                delete f_pair.second;
+            }
+            vertices.clear();
+            half_edges.clear();
+            faces.clear();
+        }
 
         const std::map<size_t, vertex<T>*>& get_vertices() const {
             return vertices;
@@ -678,7 +698,25 @@ namespace base_math {
             return result;
         }
 
-        basematrix<T, 2, 3> get_bounding_box() {
+        /**
+         * @brief Compute the axis-aligned bounding box of the mesh.
+         *
+         * This function iterates over all vertices in the mesh and determines the
+         * minimum and maximum coordinates along each axis (x, y, z). The result is
+         * returned as a 2x3 matrix where:
+         * - Row 0 contains the minimum coordinates: (min_x, min_y, min_z)
+         * - Row 1 contains the maximum coordinates: (max_x, max_y, max_z)
+         *
+         * This bounding box is useful for spatial queries, collision detection,
+         * view frustum culling, or determining an appropriate camera view volume.
+         *
+         * @return A `basematrix<T, 2, 3>` representing the bounding box. If the mesh
+         *         has no vertices, an empty default-constructed matrix is returned.
+         *
+         * @note The bounding box is axis-aligned and may not be the minimal enclosing
+         *       volume if the mesh is arbitrarily oriented in space.
+         */
+         basematrix<T, 2, 3> get_bounding_box() {
             if (vertices.size() == 0) {
                 return basematrix<T, 2, 3>(); // empty matrix
             }
@@ -702,11 +740,59 @@ namespace base_math {
             return bbox;
         }
 
+        /**
+         * @brief Translate all mesh vertices by a constant offset.
+         *
+         * Adds the given translation vector `offset` to the coordinates of every
+         * vertex stored in the mesh, effectively moving the entire mesh rigidly
+         * in space without altering its shape or topology.
+         *
+         * This is useful for repositioning the mesh in world space (e.g., when
+         * placing canonical unit shapes into a scene or aligning models).
+         *
+         * @param offset Translation vector to be added to each vertex position.
+         */
         void translate(const basevector<T, 3>& offset) {
             for (auto& v_pair : vertices) {
                 basevector<T, 3>& coords = v_pair.second->coords;
                 coords = coords + offset;
             }
+        }
+
+        /**
+         * @brief Query whether vertex curvature data has already been computed.
+         *
+         * This const accessor exposes the internal `m_curvatures_computed` flag,
+         * which is set by curvature-related routines (e.g., in `mesh_tools\curvature.cpp`)
+         * once per-vertex curvature quantities have been evaluated and stored in
+         * `vertex<T>::curvature_data`.
+         *
+         * Code that depends on curvature information can use this method to
+         * avoid redundant recomputation or to guard against accessing
+         * uninitialized curvature fields.
+         *
+         * @return `true` if curvature data has been computed for the mesh;
+         *         `false` otherwise.
+         */
+        bool curvatures_computed() const {
+            return m_curvatures_computed;
+        }
+
+        /**
+         * @brief Mutable accessor for the curvature-computed flag.
+         *
+         * Returns a non-const reference to the internal `m_curvatures_computed`
+         * flag, allowing external code (e.g., curvature estimation routines) to
+         * update the state of whether per-vertex curvature data has been computed
+         * for this mesh.
+         *
+         * Use this overload when you need to mark curvature data as up to date
+         * or invalidated, and prefer the const overload when only querying.
+         *
+         * @return Reference to the `m_curvatures_computed` boolean flag.
+         */
+        bool& curvatures_computed() {
+            return m_curvatures_computed;
         }
 
         /**

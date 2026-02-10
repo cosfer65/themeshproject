@@ -41,6 +41,19 @@ namespace base_opengl {
             glEnableVertexAttribArray(idx);
         }
 
+        if (m_mesh_data.num_curvatures > 0)
+        {
+            GLuint color_buffer;
+            glGenBuffers(1, &color_buffer);
+            glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+            glBufferData(GL_ARRAY_BUFFER, m_mesh_data.num_curvatures * sizeof(float), &m_mesh_data.curvatures[0], GL_STATIC_DRAW);
+            ++idx;
+            glVertexAttribPointer(idx, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+            glEnableVertexAttribArray(idx);
+            use_vertex_color = 1;
+        }
+
+
         GLuint index_buffer;
         glGenBuffers(1, &index_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);

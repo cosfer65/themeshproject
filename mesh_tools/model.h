@@ -60,6 +60,30 @@ public:
     const std::vector<base_math::half_edge_mesh<float>*>& get_parts() const {
         return m_parts;
     }
+
+    void normalize_absolute_curvature() {
+        if (m_parts.empty())
+            return;
+        if (!m_parts[0]->curvatures_computed())
+            return;
+        float max_abs_gauss = 0.f;
+        float min_abs_gauss = std::numeric_limits<float>::max();
+        for (auto& part : m_parts) {
+            for (const auto& v : part->get_vertices()) {
+                if (v.second->curvature_data.absGaussCurvature > max_abs_gauss)
+                    max_abs_gauss = v.second->curvature_data.absGaussCurvature;
+                if (v.second->curvature_data.absGaussCurvature < min_abs_gauss)
+                    min_abs_gauss = v.second->curvature_data.absGaussCurvature;
+            }
+        }
+        float range = max_abs_gauss - min_abs_gauss;
+        float scale = range > 0.f ? 1.f / range : 1.f;
+        for (auto& part : m_parts) {
+            for (const auto& v : part->get_vertices()) {
+                v.second->curvature_data.absGaussCurvature *= scale;
+            }
+        }
+    }
 };
 
 /// \brief Loads a `model` instance from the specified file.

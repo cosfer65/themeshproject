@@ -31,6 +31,23 @@ struct view_state {
     bool show_wireframe = false;  ///< Whether to render the mesh in wireframe mode.
     bool show_curvature = false; ///< Whether to visualize curvature directions.
     bool show_normals = false;   ///< Whether to visualize face normals.
+    bool show_gauss_map = false;   ///< Whether to visualize the Gaussian curvature map.
+
+    void set_model_changed() {
+        show_curvature = false; // disable curvature visualization until it is regenerated for the new model
+        show_normals = false;   // disable normals visualization until it is regenerated for the new model
+        show_wireframe = false;  // disable wireframe visualization until the user toggles it
+        show_gauss_map = false;  // disable Gauss map visualization until the user toggles it
+    }
+};
+
+struct model_state {
+    bool m_curvatures_calculated = false; ///< Flag indicating whether curvature has been calculated for the current model.
+    bool m_gauss_curvature_view_generated = false; ///< Flag indicating whether the Gaussian curvature visualization has been generated for the current model.
+    void set_model_changed() {
+            m_curvatures_calculated = false; // reset curvature calculation state when the model changes
+            m_gauss_curvature_view_generated = false; // reset Gauss curvature view state when the model changes
+    }
 };
 
 /// \brief Viewer and controller for displaying and interacting with a 3D mesh.
@@ -58,6 +75,7 @@ class mesh_view {
     mesh_view_private* m_private;                    ///< Private implementation details
 
     view_state m_view_state;                         ///< Current visualization state (e.g., whether to show curvature or normals)
+    model_state m_model_state;                       ///< State related to the currently loaded model (e.g., whether curvature has been calculated)
 
     bool dragging = false;                           ///< Indicates whether the user is currently dragging with the mouse (for panning)
     int last_mouse_x = 0;                            ///< Last recorded mouse X position (used for calculating deltas during dragging)
@@ -71,12 +89,32 @@ class mesh_view {
     /// avoid inconsistent state while resources are being updated.
     bool block_mouse_event = false;                   ///< Block mouse event flag (used when loading a new model)
 
+    /// \brief Constructs or refreshes the core GPU-side representation of the mesh.
+    ///
+    /// Uploads the mesh geometry and any required per-vertex/per-face
+    /// attributes (positions, normals, indices, etc.) into graphics API
+    /// resources such as vertex/index buffers or vertex array objects.
+    /// This is typically called after loading a new model or when the
+    /// mesh data has changed to ensure subsequent rendering uses an
+    /// up-to-date representation.
+    void build_model_representation();
+
     /// \brief Builds or updates the visualization of mesh curvature.
     ///
     /// Uses precomputed curvature data (see `do_curvature_calculation()`)
     /// to generate buffers or other renderable resources needed to display
     /// curvature as a shading, color map, or overlay on the mesh surface.
     void generate_model_curvature_view();
+
+    /// \brief Builds or updates the Gaussian curvature visualization for the current mesh.
+    ///
+    /// Uses curvature data associated with the loaded model to construct a
+    /// renderable representation of the Gaussian curvature field. Typical
+    /// outputs include color-mapped surfaces or auxiliary geometry that
+    /// can be toggled via the view state (see `view_state::show_gauss_map`).
+    /// This method assumes curvature information is already available;
+    /// if not, it may trigger or depend on prior curvature computation.
+    void generate_model_gauss_curvature_view();
 
     /// \brief Computes curvature information for the currently loaded mesh.
     ///
@@ -92,15 +130,6 @@ class mesh_view {
     /// line segments or color encodings, which can be used to debug or inspect
     /// the orientation of the mesh surface.
     void generate_model_normals();
-
-    /// \brief Updates the current rotation and panning offsets of the viewed objects.
-    ///
-    /// Applies any accumulated user interaction (e.g., mouse drag, orbit,
-    /// or pan operations) to the internal camera/object transform state.
-    /// This method is typically invoked from input handlers or the render
-    /// loop to convert raw input deltas into stable rotation and translation
-    /// values used when drawing the mesh.
-    void update_objects_rotation_and_pan();
 
 public:
     /// \brief Constructs a new `mesh_view` with default configuration.
@@ -224,7 +253,34 @@ public:
     void onMouseWheel(int delta, unsigned __int64 extra_btn);
 
 
+    /// \brief Handles right mouse button press events.
+    ///
+    /// \param x      Mouse X position in window/client coordinates at the time
+    ///               the right button is pressed.
+    /// \param y      Mouse Y position in window/client coordinates at the time
+    ///               the right button is pressed.
+    /// \param extra  Additional mouse state, typically a bitmask of modifier
+    ///               keys and/or other button states reported by the windowing
+    ///               system.
+    ///
+    /// This is typically used to start secondary interactions such as opening
+    /// a context menu, initiating an alternative camera control mode, or
+    /// beginning a secondary drag operation.
     void onRMouseDown(int x, int y, unsigned __int64 extra);
+
+    /// \brief Handles right mouse button release events.
+    ///
+    /// \param x      Mouse X position in window/client coordinates at the time
+    ///               the right button is released.
+    /// \param y      Mouse Y position in window/client coordinates at the time
+    ///               the right button is released.
+    /// \param extra  Additional mouse state, typically a bitmask of modifier
+    ///               keys and/or other button states reported by the windowing
+    ///               system.
+    ///
+    /// Used to finalize or cancel interactions started in `onRMouseDown`,
+    /// such as stopping a secondary drag operation or confirming a
+    /// context-sensitive action.
     void onRMouseUp(int x, int y, unsigned __int64 extra);
 
 };

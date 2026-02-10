@@ -397,6 +397,7 @@ void transformComponentsToCurvatureData(const float* accum_II, VertexCurvatureDa
     // Compute Gaussian and Mean curvature from second fundamental form coefficients
     float Gauss_curvature = accum_II[0] * accum_II[2] - accum_II[1] * accum_II[1];
     curvature_data.gaussCurvature = Gauss_curvature;
+    curvature_data.absGaussCurvature = float(fabs(Gauss_curvature));
     // Mean curvature H = 0.5 * (e + g)
     float Mean_curvature = float(0.5 * (accum_II[0] + accum_II[2]));
     curvature_data.meanCurvature = Mean_curvature;
@@ -695,4 +696,5 @@ void compute_vertex_curvatures(half_edge_mesh<float>* mesh) {
     for (auto& v : mesh->vertices) {
         calculate_vertex_curvatures(mesh, *(v.second));
     }
+    mesh->curvatures_computed() = true;
 }

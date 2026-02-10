@@ -34,6 +34,12 @@ namespace base_opengl {
                 mdata.normals.push_back(face_normal.y());
                 mdata.normals.push_back(face_normal.z());
                 mdata.indices.push_back(static_cast<unsigned int>(i1));
+                if (mesh->curvatures_computed()) {
+                    float curvature = vertices.at(v_ids[i])->curvature_data.absGaussCurvature;
+                    mdata.curvatures.push_back(curvature);
+                    mdata.curvatures.push_back(curvature);
+                    mdata.curvatures.push_back(curvature);
+                }
                 ++index;
             }
         }
@@ -41,6 +47,7 @@ namespace base_opengl {
         mdata.num_vertices = mdata.vertices.size();
         mdata.num_normals = mdata.normals.size();
         mdata.num_indices = mdata.indices.size();
+        mdata.num_curvatures = mdata.curvatures.size();
 
         return true;
     }
@@ -73,6 +80,7 @@ namespace base_opengl {
         mdata.num_vertices = mdata.vertices.size();
         mdata.num_normals = mdata.normals.size();
         mdata.num_indices = mdata.indices.size();
+        mdata.num_curvatures = 0; // gl_mesh does not have curvature data
 
         return true;
     }
