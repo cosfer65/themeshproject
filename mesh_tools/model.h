@@ -61,6 +61,29 @@ public:
         return m_parts;
     }
 
+    /// \brief Normalizes the absolute Gaussian curvature values across all mesh parts.
+    ///
+    /// This method rescales the `absGaussCurvature` attribute stored in each vertex's
+    /// `curvature_data` so that the values are linearly mapped into the range
+    /// \f$[0,1]\f$ over the entire model.
+    ///
+    /// The procedure is:
+    ///  - If there are no parts in the model, the function returns immediately.
+    ///  - If curvature data has not been computed for the first part
+    ///    (as indicated by `curvatures_computed()`), the function also returns
+    ///    without modifying any data.
+    ///  - It then iterates over all vertices in all parts to determine the global
+    ///    minimum and maximum of `absGaussCurvature`.
+    ///  - Using these extrema, it computes a scale factor \f$\frac{1}{\text{max} - \text{min}}\f$.
+    ///    If the range is zero (all vertices have identical curvature), a scale factor
+    ///    of `1.0f` is used to avoid division by zero.
+    ///  - Finally, it multiplies each vertex's `absGaussCurvature` by the computed
+    ///    scale factor, effectively normalizing the values relative to the global
+    ///    range of the model.
+    ///
+    /// \note This operation is destructive: the original absolute Gaussian curvature
+    ///       values are overwritten with their normalized counterparts.
+    ///       Callers that require the original values should back them up beforehand.
     void normalize_absolute_curvature() {
         if (m_parts.empty())
             return;

@@ -38,7 +38,7 @@ namespace base_opengl {
                     float curvature = vertices.at(v_ids[i])->curvature_data.absGaussCurvature;
                     mdata.curvatures.push_back(curvature);
                     mdata.curvatures.push_back(curvature);
-                    mdata.curvatures.push_back(curvature);
+                    mdata.curvatures.push_back(0.75f);
                 }
                 ++index;
             }
