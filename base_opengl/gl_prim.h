@@ -379,7 +379,18 @@ namespace base_opengl {
 	 * @param dr_el Whether to use element drawing (default: true).
 	 * @return Pointer to the created gl_prim.
 	 */
-	gl_prim* create_prim(half_edge_mesh<float>* ms, GLenum drmode=GL_LINE, bool dr_el=true);
+	// gl_prim* create_prim(half_edge_mesh<float>* ms, GLenum drmode=GL_LINE, bool dr_el=true);
+    template <typename T>
+	gl_prim* create_prim(base_math::half_edge_mesh<T>* ms, GLenum drmode=GL_LINE, bool dr_el=true) {
+		if (!ms) return nullptr;
+		mesh_data mdata;
+		collect_mesh_data<T>(ms, mdata);
+		gl_prim* prim = new gl_prim;
+		prim->create_from_mesh(&mdata, drmode);
+		prim->set_draw_mode(drmode);
+		return prim;
+	}
+
 
 	/**
 	 * @brief Creates a gl_prim from a gl_mesh.
@@ -390,6 +401,7 @@ namespace base_opengl {
 	 */
 	gl_prim* create_prim(gl_mesh* ms, GLenum drmode=GL_LINE, bool dr_el=true);
 
+#if 0
 	/**
 	 * @brief Creates a cone primitive.
 	 * @param drmode Polygon rasterization mode.
@@ -477,6 +489,164 @@ namespace base_opengl {
 	 * @return Pointer to the created gl_prim.
 	 */
 	gl_prim* create_torus(GLenum drmode = GL_LINE, bool dr_el = true);
+#endif
+
+	/**
+	 * @brief Creates a unit cube primitive.
+	 * Generates a half_edge_mesh representing a unit cube and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_cube(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_cube<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit sphere primitive.
+	 * Generates a half_edge_mesh representing a unit sphere and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_sphere(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_sphere<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit cylinder primitive.
+	 * Generates a half_edge_mesh representing a unit cylinder and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_cylinder(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_cylinder<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit cone primitive.
+	 * Generates a half_edge_mesh representing a unit cone and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_cone(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_cone<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit dodecahedron primitive.
+	 * Generates a half_edge_mesh representing a unit dodecahedron and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_dodecahedron(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_dodecahedron<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit icosahedron primitive.
+	 * Generates a half_edge_mesh representing a unit icosahedron and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_icosahedron(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_icosahedron<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit octahedron primitive.
+	 * Generates a half_edge_mesh representing a unit octahedron and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_octa(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_octa<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit pentahedron primitive.
+	 * Generates a half_edge_mesh representing a unit pentahedron and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_penta(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_penta<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit plane primitive.
+	 * Generates a half_edge_mesh representing a unit plane and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_plane(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_plane<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit tetrahedron primitive.
+	 * Generates a half_edge_mesh representing a unit tetrahedron and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_tetra(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_tetra<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+	/**
+	 * @brief Creates a unit torus primitive.
+	 * Generates a half_edge_mesh representing a unit torus and returns a gl_prim.
+	 * @param drmode OpenGL draw mode (default: GL_LINE).
+	 * @param dr_el Whether to use element drawing (default: true).
+	 * @return Pointer to the created gl_prim.
+	 */
+    template <typename T, typename Tinput>
+	gl_prim* create_torus(GLenum drmode=GL_LINE, bool dr_el=true) {
+		std::unique_ptr<half_edge_mesh<T>> ms(create_unit_torus<T, Tinput>());
+		gl_prim* p = create_prim(ms.get(), drmode, dr_el);
+		return p;
+	}
+
+
+
 
 	/**
 	 * @brief Creates a Universal Coordinate System (XYZ axes with arrows).

@@ -64,12 +64,12 @@ namespace base_math {
                     }
                     if (val <= 0.0f) // still non-positive -> fail
                         return false;
-                    L[i * 3 + j] = sqrtf(val);
+                    L[i * 3 + j] = T(sqrt(val));
                 }
                 else {
                     // off-diagonal
                     T ljj = L[j * 3 + j];
-                    if (fabsf(ljj) < TOLLERANCE<T>) {
+                    if (T(fabs(ljj)) < TOLLERANCE<T>) {
                         // ill-conditioned, fail
                         return false;
                     }
@@ -85,7 +85,7 @@ namespace base_math {
             for (int k = 0; k < i; ++k)
                 s -= L[i * 3 + k] * y[k];
             T lii = L[i * 3 + i];
-            if (fabsf(lii) < TOLLERANCE<T>) return false;
+            if (T(fabs(lii)) < TOLLERANCE<T>) return false;
             y[i] = s / lii;
         }
 
@@ -95,7 +95,7 @@ namespace base_math {
             for (int k = i + 1; k < 3; ++k)
                 s -= L[k * 3 + i] * x[k];
             T lii = L[i * 3 + i];
-            if (fabsf(lii) < TOLLERANCE<T>) return false;
+            if (T(fabs(lii)) < TOLLERANCE<T>) return false;
             x[i] = s / lii;
         }
 

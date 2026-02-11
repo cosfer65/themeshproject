@@ -26,7 +26,7 @@ using namespace base_math;
 using namespace base_opengl;
 
 /// external function to compute vertex curvatures, implemented in mesh_tools/curvature.cpp
-void compute_vertex_curvatures(half_edge_mesh<float>* mesh);
+void compute_vertex_curvatures(half_edge_mesh<double>* mesh);
 
 
 /// @brief Internal data container for `mesh_view`.
@@ -156,6 +156,7 @@ void mesh_view::render_scene(fmat4& cam_matrix, fmat4& rot_mat, gl_shader* shdr)
             for (const auto& part : m_private->m_draw_parts) {
                 part->set_draw_mode(GL_LINE);
                 part->force_black = true; // render wireframe in black
+                part->set_use_vertex_color(0); // ensure vertex color is disabled for wireframe
                 part->render(shdr);
             }
         }
@@ -249,19 +250,19 @@ void mesh_view::generate_model_curvature_view() {
         m_private->m_model_curvatures_min.reserve(parts.size());
         m_private->m_model_curvatures_max.reserve(parts.size());
 
-        for (base_math::half_edge_mesh<float>* part : parts) {
-            float vl = part->average_edge_length * 0.5f;
+        for (base_math::half_edge_mesh<double>* part : parts) {
+            double vl = part->average_edge_length * 0.5f;
             auto mo_min = std::make_unique<visual_objects>();
             auto mo_max = std::make_unique<visual_objects>();
             // for each vertex, add curvature vectors
             for (const auto& v : part->get_vertices()) {
-                fvec3 p = v.second->coords;
-                fvec3 k1_end = p + v.second->curvature_data.principal_directions[0] * vl;
-                fvec3 k2_end = p + v.second->curvature_data.principal_directions[1] * vl;
+                dvec3 p = v.second->coords;
+                dvec3 k1_end = p + v.second->curvature_data.principal_directions[0] * vl;
+                dvec3 k2_end = p + v.second->curvature_data.principal_directions[1] * vl;
                 // add min curvature vector in red
-                mo_min->add_vector(p, k1_end);
+                mo_min->add_vector(to_fvec3(p), to_fvec3(k1_end));
                 // add max curvature vector in green
-                mo_max->add_vector(p, k2_end);
+                mo_max->add_vector(to_fvec3(p), to_fvec3(k2_end));
             }
             mo_min->create_prim();
             mo_min->get_prim()->rotate_to(m_private->m_draw_parts[0]->get_rotation());
@@ -315,7 +316,7 @@ void mesh_view::do_curvature_calculation() {
     if (!m_private->m_model)
         return;
     const auto& parts = m_private->m_model->get_parts();
-    for (base_math::half_edge_mesh<float>* part : parts) {
+    for (base_math::half_edge_mesh<double>* part : parts) {
         compute_vertex_curvatures(part);
     }
     generate_model_curvature_view();
@@ -346,14 +347,14 @@ void mesh_view::generate_model_normals() {
         const auto& parts = m_private->m_model->get_parts();
         m_private->m_face_normals.reserve(parts.size());
 
-        for (base_math::half_edge_mesh<float>* part : parts) {
-            float vl = part->average_edge_length * 0.5f;
+        for (base_math::half_edge_mesh<double>* part : parts) {
+            float vl = float(part->average_edge_length * 0.5f);
             part->compute_face_normals();
             part->compute_face_properties();
             auto mo = std::make_unique<visual_objects>();
             for (const auto& face : part->faces) {
-                fvec3 face_normal = face.second->normal;
-                fvec3 face_center = face.second->center;
+                fvec3 face_normal = to_fvec3(face.second->normal);
+                fvec3 face_center = to_fvec3(face.second->center);
                 fvec3 normal_end = face_center + face_normal * vl;
                 mo->add_vector(face_center, normal_end);
             }
@@ -460,7 +461,7 @@ void mesh_view::build_model_representation() {
         const auto& parts = m_private->m_model->get_parts();
         m_private->m_draw_parts.reserve(parts.size());
 
-        for (const base_math::half_edge_mesh<float>* part : parts) {
+        for (const base_math::half_edge_mesh<double>* part : parts) {
             mesh_data md;
             collect_mesh_data(part, md);
             auto prim = std::make_unique<gl_prim>();

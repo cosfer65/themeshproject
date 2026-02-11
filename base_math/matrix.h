@@ -394,8 +394,6 @@ namespace base_math {
 
     typedef basematrix<float, 3, 3> fmat3;
     typedef basematrix<float, 4, 4> fmat4;
-    typedef basematrix<double, 3, 3> dmat3;
-    typedef basematrix<double, 4, 4> dmat4;
     typedef basematrix<float, 2, 1> fmat2x1;
     typedef basematrix<float, 1, 2> fmat1x2;
     typedef basematrix<float, 3, 1> fmat3x1;
@@ -406,6 +404,19 @@ namespace base_math {
     typedef basematrix<float, 6, 3> fmat6x3;
     typedef basematrix<float, 6, 1> fmat6x1;
     typedef basematrix<float, 2, 2> fmat2x2;
+
+    typedef basematrix<double, 3, 3> dmat3;
+    typedef basematrix<double, 4, 4> dmat4;
+    typedef basematrix<double, 2, 1> dmat2x1;
+    typedef basematrix<double, 1, 2> dmat1x2;
+    typedef basematrix<double, 3, 1> dmat3x1;
+    typedef basematrix<double, 1, 3> dmat1x3;
+    typedef basematrix<double, 3, 2> dmat3x2;
+    typedef basematrix<double, 2, 3> dmat2x3;
+    typedef basematrix<double, 3, 6> dmat3x6;
+    typedef basematrix<double, 6, 3> dmat6x3;
+    typedef basematrix<double, 6, 1> dmat6x1;
+    typedef basematrix<double, 2, 2> dmat2x2;
 }
 
 #endif // __matrix_h__

@@ -12,29 +12,29 @@ Purpose
     WorldCoordsToFaceCoords converts the 3D coordinates of a triangle's vertices (in world space) into 2D coordinates in the face's local tangent plane, defined by basis vectors u_f and v_f.
     This is a standard step in curvature computation: you want to work in a 2D parameterization of the triangle (u,v) instead of raw 3D coordinates.
 Parameters
-    -const fvec3& u_f, const fvec3& v_f
+    -const dvec3& u_f, const dvec3& v_f
     Orthonormal tangent basis for the face. Together with the face normal, they form a local 3D frame, but only the tangent u_f, v_f are used here.
-    -const fvec3* vertices
+    -const dvec3* vertices
     Pointer to an array of three 3D vertex positions of the face: vertices[0], vertices[1], vertices[2].
-    -const fvec3& centroid
+    -const dvec3& centroid
     The 3D centroid of the face. Used as origin of the local coordinate system.
-    -fvec2* results
+    -dvec2* results
 Output array of three 2D coordinates (u,v) for each vertex in the face local frame:
     -results[0] -> 2D coords of vertices[0]
     -results[1] -> 2D coords of vertices[1]
     -results[2] -> 2D coords of vertices[2]
 */
-static void WorldCoordsToFaceCoords(const fvec3& u_f, const fvec3& v_f, const fvec3* vertices, const fvec3& centroid, fvec2* results)
+static void WorldCoordsToFaceCoords(const dvec3& u_f, const dvec3& v_f, const dvec3* vertices, const dvec3& centroid, dvec2* results)
 {
     // Project vertices onto plane defined by centroid
-    fvec3 proj_n1 = vertices[0] - centroid;
-    fvec3 proj_n2 = vertices[1] - centroid;
-    fvec3 proj_n3 = vertices[2] - centroid;
+    dvec3 proj_n1 = vertices[0] - centroid;
+    dvec3 proj_n2 = vertices[1] - centroid;
+    dvec3 proj_n3 = vertices[2] - centroid;
     // Now proj_n1, proj_n2, proj_n3 are vectors from the centroid to each vertex.
     // So the centroid effectively becomes the(0, 0) origin in the local coordinates.
 
     // u,v in a flat array for better performance. Conceptually this is a 2x3 matrix:
-    float uvf[] = { u_f.x(), u_f.y(), u_f.z(), v_f.x(), v_f.y(), v_f.z() };
+    double uvf[] = { u_f.x(), u_f.y(), u_f.z(), v_f.x(), v_f.y(), v_f.z() };
 
     // Unrolled matrix-vector multiplication for better performance on fixed 2x3 operation
     results[0][0] = uvf[0] * proj_n1.x() + uvf[1] * proj_n1.y() + uvf[2] * proj_n1.z();
@@ -50,21 +50,21 @@ static void WorldCoordsToFaceCoords(const fvec3& u_f, const fvec3& v_f, const fv
 // This function prepares data for computing the second fundamental form of a triangular mesh face.
 // It transforms 3D normal differences into a 2D coordinate system and packages them with 2D position
 // differences for later least - squares fitting.
-static void convert3dTo2dCoords(const fmat2x3& uv_map, const fvec2(&nodes_local)[3], const fvec3(&normals)[3], float* result)
+static void convert3dTo2dCoords(const dmat2x3& uv_map, const dvec2(&nodes_local)[3], const dvec3(&normals)[3], double* result)
 {
     // Calculates how vertex normals change across the triangle's three edges. This captures how the surface is bending.
-    fvec3 diff_n2n1(normals[2] - normals[1]);
-    fvec3 diff_n0n2(normals[0] - normals[2]);
-    fvec3 diff_n1n0(normals[1] - normals[0]);
+    dvec3 diff_n2n1(normals[2] - normals[1]);
+    dvec3 diff_n0n2(normals[0] - normals[2]);
+    dvec3 diff_n1n0(normals[1] - normals[0]);
 
     // Project these 3D normal differences into the 2D local coordinate system defined by uv_map
-    fvec3 diff_n2_n1_3d(diff_n2n1.x(), diff_n2n1.y(), diff_n2n1.z());
-    fvec3 diff_n0_n2_3d(diff_n0n2.x(), diff_n0n2.y(), diff_n0n2.z());
-    fvec3 diff_n1_n0_3d(diff_n1n0.x(), diff_n1n0.y(), diff_n1n0.z());
+    dvec3 diff_n2_n1_3d(diff_n2n1.x(), diff_n2n1.y(), diff_n2n1.z());
+    dvec3 diff_n0_n2_3d(diff_n0n2.x(), diff_n0n2.y(), diff_n0n2.z());
+    dvec3 diff_n1_n0_3d(diff_n1n0.x(), diff_n1n0.y(), diff_n1n0.z());
 
-    fvec2 diff_n2_n1_2d(0);
-    fvec2 diff_n0_n2_2d(0);
-    fvec2 diff_n1_n0_2d(0);
+    dvec2 diff_n2_n1_2d(0);
+    dvec2 diff_n0_n2_2d(0);
+    dvec2 diff_n1_n0_2d(0);
 
     // Unrolled matrix-vector multiplication for 2x3 * 3x1 operations
     // uv_map is 2x3 row-major: [u_x, u_y, u_z, v_x, v_y, v_z]
@@ -78,9 +78,9 @@ static void convert3dTo2dCoords(const fmat2x3& uv_map, const fvec2(&nodes_local)
     diff_n1_n0_2d[1] = uv_map[3] * diff_n1_n0_3d.x() + uv_map[4] * diff_n1_n0_3d.y() + uv_map[5] * diff_n1_n0_3d.z();
 
     // Also compute edge differences in local 2D coordinates
-    fvec2 diff_nodes_n2n1 = nodes_local[2] - nodes_local[1];
-    fvec2 diff_nodes_n0n2 = nodes_local[0] - nodes_local[2];
-    fvec2 diff_nodes_n1n0 = nodes_local[1] - nodes_local[0];
+    dvec2 diff_nodes_n2n1 = nodes_local[2] - nodes_local[1];
+    dvec2 diff_nodes_n0n2 = nodes_local[0] - nodes_local[2];
+    dvec2 diff_nodes_n1n0 = nodes_local[1] - nodes_local[0];
 
     // Store results in the output array
     // Layout:
@@ -105,50 +105,50 @@ static void convert3dTo2dCoords(const fmat2x3& uv_map, const fvec2(&nodes_local)
     result[11] = diff_nodes_n1n0[1];
 }
 
-static void prepareSeconFundamentalCoefficients(half_edge_mesh<float>& mesh, const face<float>& cur_face, const fvec3& u_f, const fvec3& v_f, float* results)
+static void prepareSeconFundamentalCoefficients(half_edge_mesh<double>& mesh, const face<double>& cur_face, const dvec3& u_f, const dvec3& v_f, double* results)
 {
-    fvec3 elemCentroid = cur_face.center;
-    fvec3 world_coords[3] = { mesh.vertices[cur_face.v1]->coords, mesh.vertices[cur_face.v2]->coords,mesh.vertices[cur_face.v3]->coords };
-    fvec2 local_coords[3];
+    dvec3 elemCentroid = cur_face.center;
+    dvec3 world_coords[3] = { mesh.vertices[cur_face.v1]->coords, mesh.vertices[cur_face.v2]->coords,mesh.vertices[cur_face.v3]->coords };
+    dvec2 local_coords[3];
     WorldCoordsToFaceCoords(u_f, v_f, world_coords, elemCentroid, local_coords);
-    const fvec3& node_normal_1 = mesh.vertices[cur_face.v1]->normal;
-    const fvec3& node_normal_2 = mesh.vertices[cur_face.v2]->normal;
-    const fvec3& node_normal_3 = mesh.vertices[cur_face.v3]->normal;
-    fmat2x3 uv_map({ u_f.x(), u_f.y(), u_f.z(), v_f.x(), v_f.y(), v_f.z() });
+    const dvec3& node_normal_1 = mesh.vertices[cur_face.v1]->normal;
+    const dvec3& node_normal_2 = mesh.vertices[cur_face.v2]->normal;
+    const dvec3& node_normal_3 = mesh.vertices[cur_face.v3]->normal;
+    dmat2x3 uv_map({ u_f.x(), u_f.y(), u_f.z(), v_f.x(), v_f.y(), v_f.z() });
     convert3dTo2dCoords(uv_map, local_coords, { node_normal_1, node_normal_2, node_normal_3 }, results);
 }
 
 /*
  * The leastSquares helper extracts the per-triangle second fundamental form components (ee, ff, gg)
- * from a previously assembled 12-float array
+ * from a previously assembled 12-double array
 **/
-static void leastSquares(const float* second_fundamental, float* ee_ff_gg)
+static void leastSquares(const double* second_fundamental, double* ee_ff_gg)
 {
     // N is the 6x1 RHS vector storing measured normal differences second_fundamental[0..5]
-    basematrix<float, 6, 1> N({ second_fundamental[0],second_fundamental[1],second_fundamental[2],
+    basematrix<double, 6, 1> N({ second_fundamental[0],second_fundamental[1],second_fundamental[2],
                     second_fundamental[3],second_fundamental[4],second_fundamental[5] });
     // E is the 6x3 matrix storing the local edge differences second_fundamental[6..17]
     // arranged as rows: [du1 dv1 0 0 du1 dv1; du2 dv2 0 0 du2 dv2; du3 dv3 0 0 du3 dv3]
-    basematrix<float, 6, 3> E({ second_fundamental[6], second_fundamental[7],0,0,second_fundamental[6],second_fundamental[7] ,
+    basematrix<double, 6, 3> E({ second_fundamental[6], second_fundamental[7],0,0,second_fundamental[6],second_fundamental[7] ,
                    second_fundamental[8], second_fundamental[9],0,0,second_fundamental[8],second_fundamental[9] ,
                   second_fundamental[10], second_fundamental[11],0,0,second_fundamental[10],second_fundamental[11] });
 
     // Transpose of E (3x6)
-    basematrix<float, 3, 6> Trans_E = E.transpose();
+    basematrix<double, 3, 6> Trans_E = E.transpose();
     // Compute normal equations components
-    basematrix<float, 3, 3> tr_x_e = Trans_E * E;           // yields the symmetric 3x3 normal matrix -> E^T * E (3x3)
-    basematrix<float, 3, 1> rhs = Trans_E * N;              // accumulates  E^T * N (3x1)
-    basematrix<float, 3, 1> sol;                            // will hold [ee ff gg]^T
+    basematrix<double, 3, 3> tr_x_e = Trans_E * E;           // yields the symmetric 3x3 normal matrix -> E^T * E (3x3)
+    basematrix<double, 3, 1> rhs = Trans_E * N;              // accumulates  E^T * N (3x1)
+    basematrix<double, 3, 1> sol;                            // will hold [ee ff gg]^T
 
     // Solving tr_x_e * sol = rhs recovers[ee, ff, gg]^T.
     // Cholesky is used because E^T*E is symmetric positive semi-definite.
-    if (!cholesky_solve_3x3<float>(tr_x_e, rhs, sol)) {
+    if (!cholesky_solve_3x3<double>(tr_x_e, rhs, sol)) {
         // If the first solve fails(e.g., because E^T*E is near-singular), 
-        // the diagonal gets a tiny TOLLERANCE<float> bump, 
+        // the diagonal gets a tiny TOLLERANCE<double> bump, 
         // effectively applying Tikhonov regularization, and the solve is retried.
-        basematrix<float, 3, 3> reg = tr_x_e;
-        for (int i = 0; i < 3; ++i) reg[i * 3 + i] += TOLLERANCE<float>;
-        cholesky_solve_3x3<float>(reg, rhs, sol);
+        basematrix<double, 3, 3> reg = tr_x_e;
+        for (int i = 0; i < 3; ++i) reg[i * 3 + i] += TOLLERANCE<double>;
+        cholesky_solve_3x3<double>(reg, rhs, sol);
     }
 
     ee_ff_gg[0] = sol[0];
@@ -168,7 +168,7 @@ between different coordinate frames.
 
 How It Works
 Parameters
--   Map: A 2x3 transformation matrix (stored as a flat float array of 6 elements)
+-   Map: A 2x3 transformation matrix (stored as a flat double array of 6 elements)
 -   u_p, v_p: 3D basis vectors in vertex space
 -   res1, res2: Output 2x1 vectors (2 floats each) representing u_p and v_p in 2D element space
 
@@ -177,12 +177,12 @@ The function performs two matrix-vector multiplications:
 res1 = map_mat x u_p    (2x3 matrix times 3x1 vector = 2x1 result)
 res2 = map_mat x v_p
 */
-static void project_uv_to_face_2d(const basematrix<float, 2, 3>& map_mat, const fvec3& u_p, const fvec3& v_p,
-    basematrix<float, 2, 1>& res1, basematrix<float, 2, 1>& res2)
+static void project_uv_to_face_2d(const basematrix<double, 2, 3>& map_mat, const dvec3& u_p, const dvec3& v_p,
+    basematrix<double, 2, 1>& res1, basematrix<double, 2, 1>& res2)
 {
     // map_mat is 2x3 row-major: [u_x, u_y, u_z, v_x, v_y, v_z]
-    basematrix<float, 2, 1> res_mat1(map_mat * u_p);
-    basematrix<float, 2, 1> res_mat2(map_mat * v_p);
+    basematrix<double, 2, 1> res_mat1(map_mat * u_p);
+    basematrix<double, 2, 1> res_mat2(map_mat * v_p);
     for (int r = 0; r < 2; ++r) {
         res1[r] = res_mat1[r];
         res2[r] = res_mat2[r];
@@ -196,31 +196,31 @@ aligns with the vertex normal (vertex_normal).
 This is used when the face plane and vertex plane are not coplanar: you want to “tilt” the face tangent
 basis into the vertex’s tangent plane so that curvature quantities can be consistently expressed in the vertex frame.
 */
-static void rotateElemPlane(fvec3& u_f, fvec3& v_f, fvec3& vertex_normal, fvec3& face_normal, basematrix<float, 2, 3>& result)
+static void rotateElemPlane(dvec3& u_f, dvec3& v_f, dvec3& vertex_normal, dvec3& face_normal, basematrix<double, 2, 3>& result)
 {
     // Compute rotation axis
-    fvec3 rotation_axis = (vertex_normal * face_normal).normalize();
-    fvec3 rotated_u_f;
-    fvec3 rotated_v_f;
+    dvec3 rotation_axis = (vertex_normal * face_normal).normalize();
+    dvec3 rotated_u_f;
+    dvec3 rotated_v_f;
 
     // compute rotation angle and store sin/cos and rotation matrix components
-    float norm_1 = vertex_normal.length();
-    float norm_2 = face_normal.length();
-    float theta = -acos((vertex_normal.dot(face_normal)) / (norm_1 * norm_2));
-    float cth = cos(theta);
-    float sth = sin(theta);
+    double norm_1 = vertex_normal.length();
+    double norm_2 = face_normal.length();
+    double theta = -acos((vertex_normal.dot(face_normal)) / (norm_1 * norm_2));
+    double cth = cos(theta);
+    double sth = sin(theta);
     // Rotation matrix components using Rodrigues' rotation formula
     // This is the standard Rodrigues rotation matrix for rotation around unit axis k = rotation_axis by angle è :
     // R = I * cosè + (1?cosè) * k, k ^ T + [k]_x sinè
-    float r11 = cth + rotation_axis.x() * rotation_axis.x() * (1 - cth);
-    float r12 = rotation_axis.x() * rotation_axis.y() * (1 - cth) - rotation_axis.z() * sth;
-    float r13 = rotation_axis.x() * rotation_axis.z() * (1 - cth) + rotation_axis.y() * sth;
-    float r21 = rotation_axis.x() * rotation_axis.y() * (1 - cth) + rotation_axis.z() * sth;
-    float r22 = cth + rotation_axis.y() * rotation_axis.y() * (1 - cth);
-    float r23 = rotation_axis.z() * rotation_axis.y() * (1 - cth) - rotation_axis.x() * sth;
-    float r31 = rotation_axis.z() * rotation_axis.x() * (1 - cth) - rotation_axis.y() * sth;
-    float r32 = rotation_axis.z() * rotation_axis.y() * (1 - cth) + rotation_axis.x() * sth;
-    float r33 = cth + rotation_axis.z() * rotation_axis.z() * (1 - cth);
+    double r11 = cth + rotation_axis.x() * rotation_axis.x() * (1 - cth);
+    double r12 = rotation_axis.x() * rotation_axis.y() * (1 - cth) - rotation_axis.z() * sth;
+    double r13 = rotation_axis.x() * rotation_axis.z() * (1 - cth) + rotation_axis.y() * sth;
+    double r21 = rotation_axis.x() * rotation_axis.y() * (1 - cth) + rotation_axis.z() * sth;
+    double r22 = cth + rotation_axis.y() * rotation_axis.y() * (1 - cth);
+    double r23 = rotation_axis.z() * rotation_axis.y() * (1 - cth) - rotation_axis.x() * sth;
+    double r31 = rotation_axis.z() * rotation_axis.x() * (1 - cth) - rotation_axis.y() * sth;
+    double r32 = rotation_axis.z() * rotation_axis.y() * (1 - cth) + rotation_axis.x() * sth;
+    double r33 = cth + rotation_axis.z() * rotation_axis.z() * (1 - cth);
 
     // Rotate u_f and v_f using the rotation matrix
     rotated_u_f[0] = u_f.x() * r11 + u_f.y() * r12 + u_f.z() * r13;
@@ -241,17 +241,17 @@ static void rotateElemPlane(fvec3& u_f, fvec3& v_f, fvec3& vertex_normal, fvec3&
     result[5] = rotated_v_f.z();
 }
 
-static void computeSecondFundamentalFormComponentsPerElem(half_edge_mesh<float>* mesh,
-    face<float>& n_face,            // The specific triangle face to analyze
-    vertex<float>& currNode,        // Current vertex (note: appears unused!)
-    fvec3& u_f, fvec3& v_f,         // Local tangent basis vectors for the face
-    float* ee_ff_gg)                // Output: [ee, ff, gg] coefficients
+static void computeSecondFundamentalFormComponentsPerElem(half_edge_mesh<double>* mesh,
+    face<double>& n_face,            // The specific triangle face to analyze
+    vertex<double>& currNode,        // Current vertex (note: appears unused!)
+    dvec3& u_f, dvec3& v_f,         // Local tangent basis vectors for the face
+    double* ee_ff_gg)                // Output: [ee, ff, gg] coefficients
 {
     // Create temporary storage (form_II[12])
     // This 12-element array will hold intermediate data structured as:
     // Elements [0-5]: Normal differences between triangle vertices
     // Elements [6-11]: Edge coordinate differences in 2D local space
-    float form_II[12];
+    double form_II[12];
     // Evaluate the second fundamental form
     // Projects the triangle into 2D local coordinates using basis(u_f, v_f)
     // Measures how vertex normals change across the triangle
@@ -294,27 +294,27 @@ This is needed because we:
 -  Principal curvatures and directions.
 */
 static void convertSecondFundamentalFormComponentsToVertexFrame(
-    float* iso_map,          // 2x3 matrix (flattened) mapping 3D -> face 2D (u_f, v_f)
-    fvec3& u_p, fvec3& v_p,  // vertex tangent basis (3D)
-    fvec3& u_f, fvec3& v_f,  // face tangent basis (3D)
-    fvec3& node_normal,      // vertex normal
-    fvec3& elem_normal,      // face normal
-    float* ee_ff_gg,         // [e, f, g] in face basis
-    float* ee_ff_gg_V        // [e_v, f_v, g_v] in vertex basis (output)
+    double* iso_map,          // 2x3 matrix (flattened) mapping 3D -> face 2D (u_f, v_f)
+    dvec3& u_p, dvec3& v_p,  // vertex tangent basis (3D)
+    dvec3& u_f, dvec3& v_f,  // face tangent basis (3D)
+    dvec3& node_normal,      // vertex normal
+    dvec3& elem_normal,      // face normal
+    double* ee_ff_gg,         // [e, f, g] in face basis
+    double* ee_ff_gg_V        // [e_v, f_v, g_v] in vertex basis (output)
 )
 {
     // Transform vertex basis(u_p, v_p) into face 2D coordinates
-    basematrix<float, 2, 1> u_p_in_face_coords(0);
-    basematrix<float, 2, 1> v_p_in_face_coords(0);
+    basematrix<double, 2, 1> u_p_in_face_coords(0);
+    basematrix<double, 2, 1> v_p_in_face_coords(0);
 
     // Check if face and vertex planes are coplanar
-    if (isCoplanar<float>(u_f, v_f, u_p, v_p)) {
+    if (isCoplanar<double>(u_f, v_f, u_p, v_p)) {
         // Directly express vertex basis in face 2D coordinates
         project_uv_to_face_2d(iso_map, u_p, v_p, u_p_in_face_coords, v_p_in_face_coords);
     }
     else {
         // Rotate face basis into vertex plane
-        basematrix<float, 2, 3> iso_map_new(0);
+        basematrix<double, 2, 3> iso_map_new(0);
         // Adjust face basis(u_f, v_f) to align with vertex normal
         rotateElemPlane(u_f, v_f, node_normal, elem_normal, iso_map_new);
         // Now express vertex basis in the rotated face 2D coordinates
@@ -324,23 +324,23 @@ static void convertSecondFundamentalFormComponentsToVertexFrame(
     // Normalize the resulting 2D vectors
     if (!u_p_in_face_coords[0] && !u_p_in_face_coords[1])
     {
-        u_p_in_face_coords[0] = TOLLERANCE<float>;
-        u_p_in_face_coords[1] = TOLLERANCE<float>;
+        u_p_in_face_coords[0] = TOLLERANCE<double>;
+        u_p_in_face_coords[1] = TOLLERANCE<double>;
     }
     if (!v_p_in_face_coords[0] && !v_p_in_face_coords[1])
     {
-        v_p_in_face_coords[0] = TOLLERANCE<float>;
-        v_p_in_face_coords[1] = TOLLERANCE<float>;
+        v_p_in_face_coords[0] = TOLLERANCE<double>;
+        v_p_in_face_coords[1] = TOLLERANCE<double>;
     }
-    fvec3 u_p_f = { u_p_in_face_coords[0], u_p_in_face_coords[1], 0 };
-    fvec3 v_p_f = { v_p_in_face_coords[0], v_p_in_face_coords[1], 0 };
+    dvec3 u_p_f = { u_p_in_face_coords[0], u_p_in_face_coords[1], 0 };
+    dvec3 v_p_f = { v_p_in_face_coords[0], v_p_in_face_coords[1], 0 };
     u_p_f.normalize();
     v_p_f.normalize();
 
     // Re-express second fundamental form coefficients in vertex frame
-    float ee = ee_ff_gg[0];
-    float ff = ee_ff_gg[1];
-    float gg = ee_ff_gg[2];
+    double ee = ee_ff_gg[0];
+    double ff = ee_ff_gg[1];
+    double gg = ee_ff_gg[2];
     /*
     Mathematically, the second fundamental form coefficients transform under a change of basis in the tangent plane.
     - Original form in face basis:
@@ -375,10 +375,7 @@ after the swap step, index 0 is guaranteed to be the smaller value.
 •	absKmin, absKmax (outputs): magnitudes of the principal curvatures.
 •	signGauss, signMean (outputs): sign indicators (?1, 0, +1-ish via tolerance) for Gaussian and “mean” curvature.
 */
-void transformComponentsToCurvatureData(const float* accum_II, VertexCurvatureData<float>& curvature_data)
-    // float* principal_curvs,
-    // float& absKmin, float& absKmax,
-    // int& signGauss, int& signMean)
+void transformComponentsToCurvatureData(const double* accum_II, VertexCurvatureData<double>& curvature_data)
 {
     // -  e = accum_II[0]
     // -  f = accum_II[1]
@@ -395,11 +392,11 @@ void transformComponentsToCurvatureData(const float* accum_II, VertexCurvatureDa
     // These are the standard continuous formulas.
     // 
     // Compute Gaussian and Mean curvature from second fundamental form coefficients
-    float Gauss_curvature = accum_II[0] * accum_II[2] - accum_II[1] * accum_II[1];
+    double Gauss_curvature = accum_II[0] * accum_II[2] - accum_II[1] * accum_II[1];
     curvature_data.gaussCurvature = Gauss_curvature;
-    curvature_data.absGaussCurvature = float(fabs(Gauss_curvature));
+    curvature_data.absGaussCurvature = double(fabs(Gauss_curvature));
     // Mean curvature H = 0.5 * (e + g)
-    float Mean_curvature = float(0.5 * (accum_II[0] + accum_II[2]));
+    double Mean_curvature = double(0.5 * (accum_II[0] + accum_II[2]));
     curvature_data.meanCurvature = Mean_curvature;
 
     // Solve the characteristic polynomial of the Weingarten matrix to get principal curvatures
@@ -412,32 +409,32 @@ void transformComponentsToCurvatureData(const float* accum_II, VertexCurvatureDa
     // -  With k1 + k2 = 2H and k1 * k2 = K :
     // So solve_quadratic(1, -2H, K, ...) returns the two principal curvatures.
     // -  k^2 - 2Hk + k = 0
-    std::tuple<float, float> res;
-    solve_quadratic<float>(1, -2 * Mean_curvature, Gauss_curvature, res);
+    std::tuple<double, double> res;
+    solve_quadratic<double>(1, -2 * Mean_curvature, Gauss_curvature, res);
     curvature_data.principal_curvatures[0] = std::get<0>(res);
     curvature_data.principal_curvatures[1] = std::get<1>(res);
     if (curvature_data.principal_curvatures[0] > curvature_data.principal_curvatures[1]) {
         std::swap(curvature_data.principal_curvatures[0], curvature_data.principal_curvatures[1]);
     }
     // Determine signs of Gaussian and Mean curvature, and magnitudes of principal curvatures
-    float mean = float(0.5 * (curvature_data.principal_curvatures[0] + curvature_data.principal_curvatures[1]));
+    double mean = double(0.5 * (curvature_data.principal_curvatures[0] + curvature_data.principal_curvatures[1]));
     curvature_data.signGauss = 0;
-    if (mean > TOLLERANCE<float>)
+    if (mean > TOLLERANCE<double>)
         curvature_data.signMean = 1;
-    else if (mean < -TOLLERANCE<float>)
+    else if (mean < -TOLLERANCE<double>)
         curvature_data.signMean = -1;
-    if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] > TOLLERANCE<float>)
+    if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] > TOLLERANCE<double>)
         curvature_data.signGauss = 1;
-    else if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] < -TOLLERANCE<float>)
+    else if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] < -TOLLERANCE<double>)
         curvature_data.signGauss = -1;
     // Store absolute values of principal curvatures
     if (fabs(curvature_data.principal_curvatures[0]) < fabs(curvature_data.principal_curvatures[1])) {
-        curvature_data.absKmin = float(fabs(curvature_data.principal_curvatures[0]));
-        curvature_data.absKmax = float(fabs(curvature_data.principal_curvatures[1]));
+        curvature_data.absKmin = double(fabs(curvature_data.principal_curvatures[0]));
+        curvature_data.absKmax = double(fabs(curvature_data.principal_curvatures[1]));
     }
     else {
-        curvature_data.absKmax = float(fabs(curvature_data.principal_curvatures[0]));
-        curvature_data.absKmin = float(fabs(curvature_data.principal_curvatures[1]));
+        curvature_data.absKmax = double(fabs(curvature_data.principal_curvatures[0]));
+        curvature_data.absKmin = double(fabs(curvature_data.principal_curvatures[1]));
     }
 }
 
@@ -451,14 +448,14 @@ Convert the 2D principal curvature directions (in the local tangent plane basis)
 calculatePrincipalDirections computes 2D eigenvectors of the Weingarten matrix W (principal directions in 2D).
 principalDirections2Dto3D converts those 2D eigenvectors into 3D using the vertex tangent basis (u_p, v_p).
 */
-void principalDirections2Dto3D(float* dmin_2d, float* dmax_2d, fvec3& u_p, fvec3& v_p, fvec3& dmin, fvec3& dmax)
+void principalDirections2Dto3D(double* dmin_2d, double* dmax_2d, dvec3& u_p, dvec3& v_p, dvec3& dmin, dvec3& dmax)
 {
-    dmin = fvec3(
+    dmin = dvec3(
         dmin_2d[0] * u_p.x() + dmin_2d[1] * v_p.x(),
         dmin_2d[0] * u_p.y() + dmin_2d[1] * v_p.y(),
         dmin_2d[0] * u_p.z() + dmin_2d[1] * v_p.z()
     );
-    dmax = fvec3(
+    dmax = dvec3(
         dmax_2d[0] * u_p.x() + dmax_2d[1] * v_p.x(),
         dmax_2d[0] * u_p.y() + dmax_2d[1] * v_p.y(),
         dmax_2d[0] * u_p.z() + dmax_2d[1] * v_p.z()
@@ -483,7 +480,7 @@ The function:
 -  Computes the 2D eigenvectors of W corresponding to the eigenvalues in princ.
 -  Converts those 2D vectors into 3D directions using the vertex tangent basis (u_p, v_p) via principalDirections2Dto3D.
 */
-void calculatePrincipalDirections(float* W, float* princ, fvec3& u_p, fvec3& v_p, fvec3& dmin, fvec3& dmax)
+void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v_p, dvec3& dmin, dvec3& dmax)
 {
     // Compute eigenvector components with numerical stability checks
     /*
@@ -502,17 +499,17 @@ void calculatePrincipalDirections(float* W, float* princ, fvec3& u_p, fvec3& v_p
     -  denom_1 = a - princ[0], denom_2 = a - princ[1]
     So these are the denominators for the formula x = -b / (a - ë).
     */
-    float denom_1 = W[0] - princ[0];
-    float denom_2 = W[0] - princ[1];
+    double denom_1 = W[0] - princ[0];
+    double denom_2 = W[0] - princ[1];
     
     // Handle near-zero denominators to prevent division by zero
     /*
     If a is very close to ë, then a - ë is ~0 and the division could explode numerically.
-    They clamp denom_1 and denom_2 away from zero by enforcing a minimum magnitude of TOLLERANCE<float>.
+    They clamp denom_1 and denom_2 away from zero by enforcing a minimum magnitude of TOLLERANCE<double>.
     This avoids division by zero / huge eigenvector components.
     */
-    if (fabs(denom_1) < TOLLERANCE<float>) denom_1 = TOLLERANCE<float>;
-    if (fabs(denom_2) < TOLLERANCE<float>) denom_2 = TOLLERANCE<float>;
+    if (fabs(denom_1) < TOLLERANCE<double>) denom_1 = TOLLERANCE<double>;
+    if (fabs(denom_2) < TOLLERANCE<double>) denom_2 = TOLLERANCE<double>;
     
     // Compute the 2D eigenvector components (in UV coordinates)
     /*
@@ -524,20 +521,20 @@ void calculatePrincipalDirections(float* W, float* princ, fvec3& u_p, fvec3& v_p
     -  For eigenvalue princ[1]: 2D eigenvector ~ [eigvec_2, 1]
     These are still in the 2D tangent coordinate system (u_p, v_p basis).
     */
-    float eigvec_1 = -W[1] / denom_1;
-    float eigvec_2 = -W[1] / denom_2;
+    double eigvec_1 = -W[1] / denom_1;
+    double eigvec_2 = -W[1] / denom_2;
     
     // Determine which eigenvector corresponds to min/max curvature and convert to 3D
     if (fabs(princ[0]) <= fabs(princ[1]))
     {
-        float princ_dir_min[] = { eigvec_1, 1 };
-        float princ_dir_max[] = { eigvec_2, 1 };
+        double princ_dir_min[] = { eigvec_1, 1 };
+        double princ_dir_max[] = { eigvec_2, 1 };
         principalDirections2Dto3D(princ_dir_min, princ_dir_max, u_p, v_p, dmin, dmax);
     }
     else
     {
-        float princ_dir_max[] = { eigvec_1, 1 };
-        float princ_dir_min[] = { eigvec_2, 1 };
+        double princ_dir_max[] = { eigvec_1, 1 };
+        double princ_dir_min[] = { eigvec_2, 1 };
         principalDirections2Dto3D(princ_dir_min, princ_dir_max, u_p, v_p, dmin, dmax);
     }
 }
@@ -554,11 +551,11 @@ void calculatePrincipalDirections(float* W, float* princ, fvec3& u_p, fvec3& v_p
 //  
 // Inputs and Outputs
 // Inputs:
-// -  half_edge_mesh<float>* mesh
+// -  half_edge_mesh<double>* mesh
 // Full mesh structure. Needed to:
 // -  Access incident faces of the vertex (via incident_faces + mesh->faces).
 // -  Compute per-face weights via voronoi_based_weighting.
-// -  vertex<float>& v
+// -  vertex<double>& v
 // The specific vertex for which we want curvature:
 // -  normal is used to define the vertex tangent frame.
 // -  incident_faces is the list of face indices touching this vertex.
@@ -566,38 +563,38 @@ void calculatePrincipalDirections(float* W, float* princ, fvec3& u_p, fvec3& v_p
 // Outputs:
 // -  principal_dir_min.
 // -  principal_dir_max – 3D direction of maximum principal curvature at the vertex.
-static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<float>& v) {
+static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<double>& v) {
     // -  sum_ee, sum_ff, sum_gg -> running area - weighted sums of second fundamental form components in the vertex frame :
     // -  ee -> curvature in local u direction
     // -  ff -> mixed term
     // -  gg -> curvature in local v direction
     // -  sum_of_V_areas -> sum of per - face vertex areas(weights) for normalization.
-    float sum_ee = 0;
-    float sum_ff = 0;
-    float sum_gg = 0;
-    float sum_of_V_areas = 0;
+    double sum_ee = 0;
+    double sum_ff = 0;
+    double sum_gg = 0;
+    double sum_of_V_areas = 0;
 
     // -  Given the vertex normal normal, create_uv_reference_plane constructs an orthonormal tangent basis:
     // -  u_vertex, v_vertex are tangent to the surface at the vertex and orthogonal to normal.
     // -  This (u_vertex, v_vertex) is the vertex tangent frame in which we ultimately want curvatures and directions.
-    fvec3 u_vertex, v_vertex;
+    dvec3 u_vertex, v_vertex;
     create_uv_reference_plane(v.normal, u_vertex, v_vertex);
 
     // Iterate over all faces incident to the vertex
     for (auto& i : v.incident_faces) {
         // Get the face and its normal
-        face<float>* n_face = mesh->faces[i];
-        fvec3& face_normal = n_face->normal;
+        face<double>* n_face = mesh->faces[i];
+        dvec3& face_normal = n_face->normal;
 
         // Create local tangent basis for the face
         // (u_face, v_face) is a 3D tangent basis aligned with the face
-        fvec3 u_face, v_face;
+        dvec3 u_face, v_face;
         create_uv_reference_plane(face_normal, u_face, v_face);
         // -  ref_map encodes a 2x3 matrix mapping 3D vectors into the face's 2D (u_f, v_f) coordinate system:
         // -  Row 0: components of u_face
         // -  Row 1: components of v_face
         // So ref_map * [x y z]^T gives 2D coordinates of a 3D vector in the face’s tangent plane.
-        float ref_map[] = { u_face.x(), u_face.y(), u_face.z(), v_face.x(), v_face.y(), v_face.z() };
+        double ref_map[] = { u_face.x(), u_face.y(), u_face.z(), v_face.x(), v_face.y(), v_face.z() };
 
         // Compute per face second fundamental form (face frame)
         // -  This function:
@@ -609,7 +606,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
         // -  ee_ff_gg[1]: mixed curvature term in face frame.
         // -  ee_ff_gg[2]: curvature along v_face.
         // Note: they are still in the face tangent frame, not yet in the vertex tangent frame.
-        float ee_ff_gg[3];
+        double ee_ff_gg[3];
         computeSecondFundamentalFormComponentsPerElem(mesh, *n_face, v, u_face, v_face, ee_ff_gg);
       
         // Transform face-frame [e, f, g] into vertex-frame [e_v, f_v, g_v]
@@ -621,7 +618,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
         // -    ee_ff_gg_v[1] = f_v (mixed term in vertex frame)
         // -    ee_ff_gg_v[2] = g_v (curvature along v_vertex)
         // So these are per-face contributions already expressed in the vertex’s tangent frame.
-        float ee_ff_gg_v[3];
+        double ee_ff_gg_v[3];
         convertSecondFundamentalFormComponentsToVertexFrame(ref_map, u_vertex, v_vertex, u_face, v_face, v.normal, face_normal, ee_ff_gg, ee_ff_gg_v);
 
         // Area weighting and accumulation
@@ -629,7 +626,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
         // -  v_area is an area-like weight for the pair (vertex v, face n_face):
         // -    Typically a Voronoi area or similar local area assigned to v from that face.
         // -    Encodes how much of the surface "near" v is contributed by this face.
-        float v_area = voronoi_based_weighting<float>(*mesh, v.id, *n_face);
+        double v_area = voronoi_based_weighting<double>(*mesh, v.id, *n_face);
 
         // -  Each coefficient is summed with this area weight.
         // -  Conceptually: you’re computing an area-weighted average of the second fundamental form over the 1-ring of faces around v.        sum_ee += v_area * ee_ff_gg_v[0];
@@ -643,11 +640,11 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
         sum_of_V_areas = 1;
    
     // Normalize to get averaged second fundamental form at vertex
-    // If a sum is exactly zero, it’s replaced by a small TOLLERANCE_SQ<float> 
+    // If a sum is exactly zero, it’s replaced by a small TOLLERANCE_SQ<double> 
     // to avoid degenerate zero matrices in later computations.
-    float normalized_ee = (!sum_ee) ? TOLLERANCE_SQ<float> : (sum_ee / sum_of_V_areas);
-    float normalized_ff = (!sum_ff) ? TOLLERANCE_SQ<float> : (sum_ff / sum_of_V_areas);
-    float normalized_gg = (!sum_gg) ? TOLLERANCE_SQ<float> : (sum_gg / sum_of_V_areas);
+    double normalized_ee = (!sum_ee) ? TOLLERANCE_SQ<double> : (sum_ee / sum_of_V_areas);
+    double normalized_ff = (!sum_ff) ? TOLLERANCE_SQ<double> : (sum_ff / sum_of_V_areas);
+    double normalized_gg = (!sum_gg) ? TOLLERANCE_SQ<double> : (sum_gg / sum_of_V_areas);
 
     // Transform second fundamental form components into curvature data
     // W represents the entries of the 2x2 Weingarten (shape) matrix in the vertex tangent frame:
@@ -658,10 +655,10 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
     //   e = W[0]
     //   f = W[1]
     //   g = W[2]
-    float W[] = { normalized_ee,normalized_ff,normalized_gg };
+    double W[] = { normalized_ee,normalized_ff,normalized_gg };
 
     // Derive principal curvature values and curvature signs
-    VertexCurvatureData<float>& curvature_data = v.curvature_data;
+    VertexCurvatureData<double>& curvature_data = v.curvature_data;
 
     // -  transformComponentsToCurvatureData:
     // -    Computes Gaussian curvature K = e*g - f².
@@ -672,7 +669,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
     transformComponentsToCurvatureData(W, curvature_data);
 
     //Get position of Node
-    //fvec3 Node_3d = v.coords;
+    //dvec3 Node_3d = v.coords;
 
     // Compute principal directions in 3D
     // -  calculatePrincipalDirections:
@@ -687,7 +684,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<float>* mesh, vertex<floa
 }
 
 // compute_vertex_curvatures computes curvature information for all vertices in the mesh.
-void compute_vertex_curvatures(half_edge_mesh<float>* mesh) {
+void compute_vertex_curvatures(half_edge_mesh<double>* mesh) {
     // Precompute face properties and vertex normals
     mesh->compute_face_properties();
     mesh->compute_vertex_normals();

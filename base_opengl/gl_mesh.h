@@ -4,13 +4,15 @@
 #include <vector>
 #include "vector.h"
 
-namespace base_math {
-    /**
-    * forward declarations
-    */
-    template <typename T>
-    class half_edge_mesh;
-}
+#include "mesh.h"
+
+// namespace base_math {
+//     /**
+//     * forward declarations
+//     */
+//     template <typename T>
+//     class half_edge_mesh;
+// }
 
 
 using namespace base_math;
@@ -117,7 +119,45 @@ namespace base_opengl {
      * @param mdata Reference to the mesh_data structure to fill.
      * @return True if successful, false otherwise.
      */
-    bool collect_mesh_data(const half_edge_mesh<float>* mesh, mesh_data& mdata);
+    template <typename T>
+    bool collect_mesh_data(const half_edge_mesh<T>* mesh, mesh_data& mdata) {
+        // build data from half-edge mesh based on its faces
+        // this allows for proper duplication of vertices/normals per face
+        // it is better for flat shading
+        size_t index = mdata.vertices.size() / 3;
+        const std::map<size_t, vertex<T>*>& vertices = mesh->get_vertices();
+        for (auto f_pair : mesh->faces) {
+            face<T>* f = f_pair.second;
+            size_t v_ids[3] = { f->v1, f->v2, f->v3 };
+            fvec3 face_normal = fvec3(float(f->normal.x()), float(f->normal.y()), float(f->normal.z()));
+            for (int i = 0; i < 3; ++i) {
+                dvec3 vert = vertices.at(v_ids[i])->coords;
+                size_t i1 = index;
+                mdata.vertices.push_back(float(vert.x()));
+                mdata.vertices.push_back(float(vert.y()));
+                mdata.vertices.push_back(float(vert.z()));
+                mdata.normals.push_back(face_normal.x());
+                mdata.normals.push_back(face_normal.y());
+                mdata.normals.push_back(face_normal.z());
+                mdata.indices.push_back(static_cast<unsigned int>(i1));
+                if (mesh->curvatures_computed()) {
+                    float curvature = float(vertices.at(v_ids[i])->curvature_data.absGaussCurvature);
+                    mdata.curvatures.push_back(curvature);
+                    mdata.curvatures.push_back(curvature);
+                    mdata.curvatures.push_back(0.75f);
+                }
+                ++index;
+            }
+        }
+
+        mdata.num_vertices = mdata.vertices.size();
+        mdata.num_normals = mdata.normals.size();
+        mdata.num_indices = mdata.indices.size();
+        mdata.num_curvatures = mdata.curvatures.size();
+
+        return true;
+    }
+
 
     /**
      * @brief Creates a simple mesh representing the UCS (Universal Coordinate System).

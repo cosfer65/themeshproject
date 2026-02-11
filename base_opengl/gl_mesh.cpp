@@ -4,55 +4,6 @@
 namespace base_opengl {
 
     /**
-     * @brief Collects vertex, normal, and index data from a half-edge mesh and stores it in a mesh_data structure.
-     * 
-     * This function iterates through all vertices and faces of the given half_edge_mesh and extracts
-     * their coordinates and normals, storing them in the provided mesh_data object. Face indices are
-     * converted from 1-based to 0-based indexing.
-     * 
-     * @param mesh Pointer to the half_edge_mesh containing the mesh data.
-     * @param mdata Reference to the mesh_data structure to populate.
-     * @return true if data collection is successful.
-     */
-    bool collect_mesh_data(const half_edge_mesh<float>* mesh, mesh_data& mdata) {
-        // build data from half-edge mesh based on its faces
-        // this allows for proper duplication of vertices/normals per face
-        // it is better for flat shading
-        size_t index = mdata.vertices.size() / 3;
-        const std::map<size_t, vertex<float>*>& vertices = mesh->get_vertices();
-        for (auto f_pair : mesh->faces) {
-            face<float>* f = f_pair.second;
-            size_t v_ids[3] = { f->v1, f->v2, f->v3 };
-            fvec3 face_normal = fvec3(f->normal.x(), f->normal.y(), f->normal.z());
-            for (int i = 0; i < 3; ++i) {
-                fvec3 vert = vertices.at(v_ids[i])->coords; //  , vertices.at(f->v1)->coords, vertices.at(f->v1)->coords
-                size_t i1 = index;
-                mdata.vertices.push_back(vert.x());
-                mdata.vertices.push_back(vert.y());
-                mdata.vertices.push_back(vert.z());
-                mdata.normals.push_back(face_normal.x());
-                mdata.normals.push_back(face_normal.y());
-                mdata.normals.push_back(face_normal.z());
-                mdata.indices.push_back(static_cast<unsigned int>(i1));
-                if (mesh->curvatures_computed()) {
-                    float curvature = vertices.at(v_ids[i])->curvature_data.absGaussCurvature;
-                    mdata.curvatures.push_back(curvature);
-                    mdata.curvatures.push_back(curvature);
-                    mdata.curvatures.push_back(0.75f);
-                }
-                ++index;
-            }
-        }
-
-        mdata.num_vertices = mdata.vertices.size();
-        mdata.num_normals = mdata.normals.size();
-        mdata.num_indices = mdata.indices.size();
-        mdata.num_curvatures = mdata.curvatures.size();
-
-        return true;
-    }
-
-    /**
      * @brief Collects vertex, normal, and index data from a gl_mesh and stores it in a mesh_data structure.
      * 
      * This function extracts all vertex positions, normals, and indices from the given gl_mesh and

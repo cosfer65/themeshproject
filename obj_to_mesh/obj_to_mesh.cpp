@@ -128,10 +128,10 @@
 
 struct vertex {
     size_t id;
-    float x;
-    float y;
-    float z;
-    vertex(size_t _id, float _x, float _y, float _z) :id(_id), x(_x), y(_y), z(_z) {}
+    double x;
+    double y;
+    double z;
+    vertex(size_t _id, double _x, double _y, double _z) :id(_id), x(_x), y(_y), z(_z) {}
 };
 
 struct face {
@@ -193,9 +193,9 @@ bool parse_obj_model(const std::string& fnm) {
                     continue;
                 }
                 char* end;
-                float x = std::strtof(tokens[1].c_str(), &end);
-                float y = std::strtof(tokens[2].c_str(), &end);
-                float z = std::strtof(tokens[3].c_str(), &end);
+                double x = std::strtod(tokens[1].c_str(), &end);
+                double y = std::strtod(tokens[2].c_str(), &end);
+                double z = std::strtod(tokens[3].c_str(), &end);
                 vertices.emplace_back(vertex_count, x, y, z);
                 ++vertex_count;
             }
@@ -238,9 +238,9 @@ bool parse_obj_model(const std::string& fnm) {
     odl.write((const char*)&s, sizeof(size_t));
     for (const auto& vtx : vertices) {
         odl.write((const char*)&vtx.id, sizeof(size_t));
-        odl.write((const char*)&vtx.x, sizeof(float));
-        odl.write((const char*)&vtx.y, sizeof(float));
-        odl.write((const char*)&vtx.z, sizeof(float));
+        odl.write((const char*)&vtx.x, sizeof(double));
+        odl.write((const char*)&vtx.y, sizeof(double));
+        odl.write((const char*)&vtx.z, sizeof(double));
     }
     
     s = faces.size();

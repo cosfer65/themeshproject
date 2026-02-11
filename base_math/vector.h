@@ -437,6 +437,14 @@ namespace base_math {
     typedef basevector<float, 2> fvec2;
     typedef basevector<float, 3> fvec3;
     typedef basevector<float, 4> fvec4;
+
+    typedef basevector<double, 2> dvec2;
+    typedef basevector<double, 3> dvec3;
+    
+    inline fvec3 to_fvec3(const dvec3& v) {
+        return fvec3(static_cast<float>(v.x()), static_cast<float>(v.y()), static_cast<float>(v.z()));
+    }
+
 }
 
 #endif // __vector_h__

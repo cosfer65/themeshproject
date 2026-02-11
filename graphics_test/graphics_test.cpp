@@ -153,47 +153,47 @@ public:
         m_ucs->move_to(-6, 4, 0);
         m_ucs->set_scale(fvec3(1.5));
 
-        m_cone.reset(create_cone(GL_FILL));
+        m_cone.reset(create_cone<double, double>(GL_FILL));
         m_cone->move_to(fvec3(-2, 4, 0));
         m_cone->set_scale(fvec3(1.5f));
 
-        m_cube.reset(create_cube(GL_FILL));
+        m_cube.reset(create_cube<double, double>(GL_FILL));
         m_cube->move_to(fvec3(2, 4, 0));
         m_cube->set_scale(fvec3(1.5f));
 
-        m_cylinder.reset(create_cylinder(GL_FILL));
+        m_cylinder.reset(create_cylinder<double, double>(GL_FILL));
         m_cylinder->move_to(fvec3(6, 4, 0));
         m_cylinder->set_scale(fvec3(1.5f));
 
-        m_dodeca.reset(create_dodecahedron(GL_FILL));
+        m_dodeca.reset(create_dodecahedron<double, double>(GL_FILL));
         m_dodeca->move_to(fvec3(-6, 0, 0));
         m_dodeca->set_scale(fvec3(1.5f));
 
-        m_icosa.reset(create_icosahedron(GL_FILL));
+        m_icosa.reset(create_icosahedron<double, double>(GL_FILL));
         m_icosa->move_to(fvec3(-2, 0, 0));
         m_icosa->set_scale(fvec3(1.5f));
 
-        m_octa.reset(create_octa(GL_FILL));
+        m_octa.reset(create_octa<double, double>(GL_FILL));
         m_octa->move_to(fvec3(2, 0, 0));
         m_octa->set_scale(fvec3(1.5f));
 
-        m_penta.reset(create_penta());
+        m_penta.reset(create_penta<double, double>());
         m_penta->move_to(fvec3(6, 0, 0));
         m_penta->set_scale(fvec3(1.5f));
 
-        m_plane.reset(create_plane());
+        m_plane.reset(create_plane<double, double>());
         m_plane->move_to(fvec3(-6, -4, 0));
         m_plane->set_scale(fvec3(1.5f));
 
-        m_sphere.reset(create_sphere(GL_FILL));
+        m_sphere.reset(create_sphere<double, double>(GL_FILL));
         m_sphere->move_to(fvec3(-2, -4, 0));
         m_sphere->set_scale(fvec3(1.5f));
 
-        m_tetra.reset(create_tetra());
+        m_tetra.reset(create_tetra<double, double>());
         m_tetra->move_to(fvec3(2, -4, 0));
         m_tetra->set_scale(fvec3(1.5f));
 
-        m_torus.reset(create_torus());
+        m_torus.reset(create_torus<double, double>());
         m_torus->move_to(fvec3(6, -4, 0));
         m_torus->set_scale(fvec3(1.5f));
 

@@ -19,7 +19,7 @@ using namespace base_math;
  *                  Row 0 contains the minimum (x, y, z), row 1 the maximum (x, y, z).
  * @param part_bbox [in]     Bounding box of a single mesh part in the same format.
  */
-static void expand_bbox(basematrix<float, 2, 3>& bbox, const basematrix<float, 2, 3>& part_bbox) {
+static void expand_bbox(basematrix<double, 2, 3>& bbox, const basematrix<double, 2, 3>& part_bbox) {
     for (size_t i = 0; i < 3; ++i) {
         if (part_bbox(0, i) < bbox(0, i)) {
             bbox(0, i) = part_bbox(0, i);
@@ -37,10 +37,10 @@ static void expand_bbox(basematrix<float, 2, 3>& bbox, const basematrix<float, 2
  * coordinates along each axis.
  *
  * @param bbox [in] Bounding box as a 2x3 matrix (row 0 = min, row 1 = max).
- * @return Center of the bounding box as an `fvec3`.
+ * @return Center of the bounding box as an `dvec3`.
  */
-static fvec3 bbox_center(const basematrix<float, 2, 3>& bbox) {
-    return fvec3(
+static dvec3 bbox_center(const basematrix<double, 2, 3>& bbox) {
+    return dvec3(
         (bbox(0, 0) + bbox(1, 0)) * 0.5f,
         (bbox(0, 1) + bbox(1, 1)) * 0.5f,
         (bbox(0, 2) + bbox(1, 2)) * 0.5f
@@ -58,14 +58,14 @@ static fvec3 bbox_center(const basematrix<float, 2, 3>& bbox) {
  * @param mdl [in,out] Pointer to the model to be updated. Must not be null.
  */
 static void recalculate_model(model* mdl) {
-    basematrix<float, 2, 3> bbox(0);
+    basematrix<double, 2, 3> bbox(0);
     for (auto part : mdl->get_parts()) {
-        basematrix<float, 2, 3> part_bbox = part->get_bounding_box();
+        basematrix<double, 2, 3> part_bbox = part->get_bounding_box();
         expand_bbox(bbox, part_bbox);
     }
-    fvec3 bbcenter = bbox_center(bbox);
+    dvec3 bbcenter = bbox_center(bbox);
     for (auto part : mdl->get_parts()) {
-        part->translate(fvec3(-bbcenter.x(), -bbcenter.y(), -bbcenter.z()));
+        part->translate(dvec3(-bbcenter.x(), -bbcenter.y(), -bbcenter.z()));
         part->compute_face_normals();
         part->compute_face_properties();
         part->compute_vertex_normals();
@@ -98,7 +98,7 @@ static bool load_obj(const std::string& fnm, model* mdl) {
     std::ifstream mdl_file(fnm);
     size_t vertex_count = 1;
     size_t face_count = 1;
-    base_math::half_edge_mesh<float>* mesh = nullptr;
+    base_math::half_edge_mesh<double>* mesh = nullptr;
 
     if (mdl_file.is_open()) {
 
@@ -117,14 +117,14 @@ static bool load_obj(const std::string& fnm, model* mdl) {
                     // finalize previous mesh part
                     mesh->average_edge_length = mesh->total_edge_length / mesh->half_edges.size();
                 }
-                mesh = new base_math::half_edge_mesh<float>(); 
+                mesh = new base_math::half_edge_mesh<double>();
                 mdl->add_part(mesh);
             }
             else if (tokens[0] == "v") {
                 // add vertex
-                float x = (float)atof(tokens[1].c_str());
-                float y = (float)atof(tokens[2].c_str());
-                float z = (float)atof(tokens[3].c_str());
+                double x = atof(tokens[1].c_str());
+                double y = atof(tokens[2].c_str());
+                double z = atof(tokens[3].c_str());
                 mesh->add_vertex(vertex_count, x, y, z);
                 ++vertex_count;
             }

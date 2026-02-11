@@ -69,15 +69,15 @@ namespace base_opengl {
      * @param dr_el Whether to use element drawing (default: true).
      * @return Pointer to the created gl_prim.
      */
-    gl_prim* create_prim(half_edge_mesh<float>* ms, GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        if (!ms) return nullptr;
-        mesh_data mdata;
-        collect_mesh_data(ms, mdata);
-        gl_prim* prim = new gl_prim;
-        prim->create_from_mesh(&mdata, drmode);
-        prim->set_draw_mode(drmode);
-        return prim;
-    }
+    // gl_prim* create_prim(half_edge_mesh<double>* ms, GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
+    //     if (!ms) return nullptr;
+    //     mesh_data mdata;
+    //     collect_mesh_data<double>(ms, mdata);
+    //     gl_prim* prim = new gl_prim;
+    //     prim->create_from_mesh(&mdata, drmode);
+    //     prim->set_draw_mode(drmode);
+    //     return prim;
+    // }
 
     /**
      * @brief Creates a gl_prim from a gl_mesh.
@@ -96,7 +96,7 @@ namespace base_opengl {
         prim->set_draw_mode(drmode);
         return prim;
     }
-
+#if 0
     /**
      * @brief Creates a unit cube primitive.
      * Generates a half_edge_mesh representing a unit cube and returns a gl_prim.
@@ -105,7 +105,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_cube(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_cube<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_cube<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -118,7 +118,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_sphere(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_sphere<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_sphere<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -131,7 +131,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_cylinder(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_cylinder<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_cylinder<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -144,7 +144,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_cone(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_cone<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_cone<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -157,7 +157,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_dodecahedron(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_dodecahedron<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_dodecahedron<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -170,7 +170,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_icosahedron(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_icosahedron<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_icosahedron<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -183,7 +183,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_octa(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_octa<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_octa<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -196,7 +196,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_penta(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_penta<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_penta<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -209,7 +209,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_plane(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_plane<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_plane<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -222,7 +222,7 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_tetra(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_tetra<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_tetra<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }
@@ -235,10 +235,11 @@ namespace base_opengl {
      * @return Pointer to the created gl_prim.
      */
     gl_prim* create_torus(GLenum drmode/*=GL_LINE*/, bool dr_el/*=true*/) {
-        std::unique_ptr<half_edge_mesh<float>> ms(create_unit_torus<float>());
+        std::unique_ptr<half_edge_mesh<double>> ms(create_unit_torus<double, double>());
         gl_prim* p = create_prim(ms.get(), drmode, dr_el);
         return p;
     }  
+#endif
 
     /**
      * @class gl_ucs

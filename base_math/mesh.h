@@ -870,7 +870,7 @@ namespace base_math {
   * @param fnm Path to the binary mesh file.
   * @return Pointer to a newly allocated `mesh_def<T>` on success, or nullptr on failure.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     struct mesh_def<T>* read_mesh_file(const std::string& fnm) {
         std::ifstream rf(fnm, std::ios::in | std::ios::binary);
 
@@ -881,11 +881,11 @@ namespace base_math {
         rf.read((char*)&d, sizeof(size_t));
         for (i = 0; i < d; ++i) {
             size_t id;
-            float x, y, z; // the file is built with 'float'!!!
+            Tinput x, y, z; // the file is built with 'float'!!!
             rf.read((char*)&id, sizeof(size_t));
-            rf.read((char*)&x, sizeof(float));
-            rf.read((char*)&y, sizeof(float));
-            rf.read((char*)&z, sizeof(float));
+            rf.read((char*)&x, sizeof(Tinput));
+            rf.read((char*)&y, sizeof(Tinput));
+            rf.read((char*)&z, sizeof(Tinput));
             mesh->vertices.push_back(std::tuple<size_t, T, T, T>(id, T(x), T(y), T(z)));
         }
         rf.read((char*)&d, sizeof(size_t));
@@ -940,11 +940,11 @@ namespace base_math {
   * @param fnm Path to the binary mesh file.
   * @return Pointer to newly created `half_edge_mesh<T>` or nullptr on failure.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_from_mesh_file(const std::string& fnm) {
         if (file_extension(fnm) != "prim")
             return nullptr;
-        struct mesh_def<T>* mesh = read_mesh_file<T>(fnm);
+        struct mesh_def<T>* mesh = read_mesh_file<T, Tinput>(fnm);
         if (mesh == nullptr)
             return nullptr;
         half_edge_mesh<T>* he_mesh = parse_mesh<T>(*mesh);
@@ -959,97 +959,97 @@ namespace base_math {
   * @brief Create a unit cone mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_cone() {
-        return create_from_mesh_file<T>("resources\\models\\unit_cone.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_cone.prim");
     }
 
     /**
   * @brief Create a unit cube mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_cube() {
-        return create_from_mesh_file<T>("resources\\models\\unit_cube.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_cube.prim");
     }
 
     /**
   * @brief Create a unit cylinder mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_cylinder() {
-        return create_from_mesh_file<T>("resources\\models\\unit_cylinder.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_cylinder.prim");
     }
 
     /**
   * @brief Create a unit dodecahedron mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_dodecahedron() {
-        return create_from_mesh_file<T>("resources\\models\\unit_dodecahedron.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_dodecahedron.prim");
     }
 
     /**
   * @brief Create a unit icosahedron mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_icosahedron() {
-        return create_from_mesh_file<T>("resources\\models\\unit_icosahedron.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_icosahedron.prim");
     }
 
     /**
   * @brief Create a unit octahedron mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_octa() {
-        return create_from_mesh_file<T>("resources\\models\\unit_octa.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_octa.prim");
     }
     /**
   * @brief Create a unit penta mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_penta() {
-        return create_from_mesh_file<T>("resources\\models\\unit_penta.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_penta.prim");
     }
 
     /**
   * @brief Create a unit plane mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_plane() {
-        return create_from_mesh_file<T>("resources\\models\\unit_plane.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_plane.prim");
     }
 
     /**
   * @brief Create a unit-diameter sphere mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_sphere() {
-        return create_from_mesh_file<T>("resources\\models\\unit_sphere.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_sphere.prim");
     }
 
     /**
   * @brief Create a unit tetrahedron mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_tetra() {
-        return create_from_mesh_file<T>("resources\\models\\unit_tetra.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_tetra.prim");
     }
     /**
   * @brief Create a unit torus mesh from resources.
   * @return Newly allocated half_edge_mesh or nullptr if file missing.
   */
-    template <typename T>
+    template <typename T, typename Tinput>
     half_edge_mesh<T>* create_unit_torus() {
-        return create_from_mesh_file<T>("resources\\models\\unit_torus.prim");
+        return create_from_mesh_file<T, Tinput>("resources\\models\\unit_torus.prim");
     }
 }
 #endif // __mesh_h__

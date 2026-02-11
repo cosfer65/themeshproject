@@ -3,7 +3,7 @@
 ///        represent and load multi-part 3D meshes.
 ///
 /// This header defines a lightweight container for multiple mesh parts based on
-/// `base_math::half_edge_mesh<float>` and a factory function that loads such
+/// `base_math::half_edge_mesh<double>` and a factory function that loads such
 /// models from an external file.
 
 #ifndef __model_loader_h__
@@ -17,7 +17,7 @@
 /// \class model
 /// \brief Aggregates multiple half-edge mesh parts into a single logical model.
 ///
-/// The `model` class holds a collection of pointers to `base_math::half_edge_mesh<float>`
+/// The `model` class holds a collection of pointers to `base_math::half_edge_mesh<double>`
 /// instances, each representing a separate part of a 3D model (for example,
 /// different sub-meshes or components). The class provides methods to add parts
 /// and to retrieve the complete list of stored parts.
@@ -28,8 +28,8 @@
 class model {
     /// \brief Collection of mesh parts that make up the model.
     ///
-    /// Each entry points to a `base_math::half_edge_mesh<float>` instance.
-    std::vector<base_math::half_edge_mesh<float>*> m_parts;
+    /// Each entry points to a `base_math::half_edge_mesh<double>` instance.
+    std::vector<base_math::half_edge_mesh<double>*> m_parts;
 public:
     /// \brief Constructs an empty model with no mesh parts.
     model() {}
@@ -47,17 +47,17 @@ public:
     ///
     /// The provided pointer is stored as-is; ownership is not transferred.
     ///
-    /// \param part Pointer to a `base_math::half_edge_mesh<float>` instance
+    /// \param part Pointer to a `base_math::half_edge_mesh<double>` instance
     ///             representing a model part. Must remain valid for as long
     ///             as the model uses it.
-    void add_part(base_math::half_edge_mesh<float>* part) {
+    void add_part(base_math::half_edge_mesh<double>* part) {
         m_parts.push_back(part);
     }
 
     /// \brief Provides read-only access to the collection of mesh parts.
     ///
     /// \return A constant reference to the internal vector of mesh pointers.
-    const std::vector<base_math::half_edge_mesh<float>*>& get_parts() const {
+    const std::vector<base_math::half_edge_mesh<double>*>& get_parts() const {
         return m_parts;
     }
 
@@ -89,8 +89,8 @@ public:
             return;
         if (!m_parts[0]->curvatures_computed())
             return;
-        float max_abs_gauss = 0.f;
-        float min_abs_gauss = std::numeric_limits<float>::max();
+        double max_abs_gauss = 0.;
+        double min_abs_gauss = std::numeric_limits<double>::max();
         for (auto& part : m_parts) {
             for (const auto& v : part->get_vertices()) {
                 if (v.second->curvature_data.absGaussCurvature > max_abs_gauss)
@@ -99,8 +99,8 @@ public:
                     min_abs_gauss = v.second->curvature_data.absGaussCurvature;
             }
         }
-        float range = max_abs_gauss - min_abs_gauss;
-        float scale = range > 0.f ? 1.f / range : 1.f;
+        double range = max_abs_gauss - min_abs_gauss;
+        double scale = range > 0. ? 1. / range : 1.;
         for (auto& part : m_parts) {
             for (const auto& v : part->get_vertices()) {
                 v.second->curvature_data.absGaussCurvature *= scale;
@@ -112,7 +112,7 @@ public:
 /// \brief Loads a `model` instance from the specified file.
 ///
 /// This function parses the file identified by \p fnm and constructs a
-/// `model` composed of one or more `base_math::half_edge_mesh<float>` parts,
+/// `model` composed of one or more `base_math::half_edge_mesh<double>` parts,
 /// depending on the file contents.
 ///
 /// \param fnm Path to the model file to be loaded.
