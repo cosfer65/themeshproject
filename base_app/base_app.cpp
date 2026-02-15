@@ -201,19 +201,19 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
             return 0;
         }
         break;
-    case WM_KEYDOWN:                                                  // Update Keyboard Buffers For keyDown Pressed
+    case WM_KEYDOWN:
         if ((wParam >= 0) && (wParam <= 255)) {                       // Is Key (wParam) In A Valid Range?
             theApp->onKeyDown((int)wParam);
             return 0;
         }
-        break;                                                        // Break
+        break;
 
-    case WM_KEYUP:                                                    // Update Keyboard Buffers For keyDown Released
+    case WM_KEYUP:
         if ((wParam >= 0) && (wParam <= 255)) {                       // Is Key (wParam) In A Valid Range?
             theApp->onKeyUp((int)wParam);                             // Set The Selected Key (wParam) To False
             return 0;                                                 // Return
         }
-        break;                                                        // Break
+        break;
 
     case WM_MOUSEMOVE:
     case WM_LBUTTONDOWN:
@@ -262,13 +262,13 @@ namespace base_app {
     {
         theApp = this;
 
-        m_window.szTitle = "Physics simulation";
+        m_window.szTitle = "TheMeshProject";
         m_window.prefered_width = 800;
         m_window.prefered_height = 600;
         m_window.current_width = 0;
         m_window.current_height = 0;
 
-        szWindowClass = "Physics simulation";
+        szWindowClass = "TheMeshProject";
 
         hInst = 0;
         m_window.hWnd = 0;
@@ -292,9 +292,6 @@ namespace base_app {
      */
     int gl_application::run()
     {
-        // zero the keystatus buffers
-        memset(keyDown, 0, sizeof(keyDown));
-
         // initialize wrangler library
         glewInit();
         // initialize game
@@ -683,7 +680,6 @@ namespace base_app {
      * @param keycode The key code pressed.
      */
     void gl_application::onKeyDown(int keycode) {
-        keyDown[keycode] = true;							 // Set The Selected Key (wParam) To True
     }
 
     /**
@@ -691,7 +687,6 @@ namespace base_app {
      * @param keycode The key code released.
      */
     void gl_application::onKeyUp(int keycode) {
-        keyDown[keycode] = false;						     // Set The Selected Key (wParam) To False
     }
 
     /**

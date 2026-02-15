@@ -85,7 +85,6 @@ namespace base_app {
         WNDCLASSEX m_wcex;                      ///< Window class structure.
 
     public:
-        bool keyDown[256];      ///< Keyboard state array.
         gl_window m_window;     ///< OpenGL window properties.
 
         /**

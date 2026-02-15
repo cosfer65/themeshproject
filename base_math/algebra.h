@@ -104,6 +104,114 @@ namespace base_math {
 
 
 
+    /**
+     * @brief Recovers second fundamental form coefficients (e, f, g) from sampled data via least squares.
+     *
+     * This routine solves a small overdetermined linear system to estimate the per-triangle
+     * second fundamental form entries '(e, f, g)' from preassembled measurements stored in
+     * 'second_fundamental'. The system is built as:
+     *
+     *   E * [e f g]^T ? N
+     *
+     * where:
+     *   - 'N' is a '6x1' vector of measured normal differences (finite differences in normal space),
+     *   - 'E' is a '6x3' matrix encoding local '(du, dv)' edge parameter differences.
+     *
+     * The least-squares solution is obtained via the normal equations:
+     *
+     *   (E^T * E) * [e f g]^T = E^T * N
+     *
+     * and solved using the Cholesky-based solver 'cholesky_solve_3x3'. If the normal matrix
+     * 'E^T * E' is near-singular or ill-conditioned, a tiny diagonal regularization
+     * ('TOLLERANCE<T>') is applied (Tikhonov regularization) and the system is solved again.
+     *
+     * Input layout (second_fundamental):
+     *   - 'second_fundamental[0..5]'   : N (6 components of measured normal differences)
+     *   - 'second_fundamental[6..11]'  : three '(du, dv)' pairs, one per triangle edge:
+     *        [du1, dv1, du2, dv2, du3, dv3]
+     *
+     * Internal assembly:
+     *   - 'N' is assembled as a 'basematrix<T, 6, 1>' from 'second_fundamental[0..5]'.
+     *   - 'E' is assembled as a 'basematrix<T, 6, 3>' from the three '(du, dv)' pairs
+     *     following the documented row pattern:
+     *
+     *       [du1 dv1 0  0 du1 dv1;
+     *        du2 dv2 0  0 du2 dv2;
+     *        du3 dv3 0  0 du3 dv3]
+     *
+     *     (compactly encoded in row-major form through the constructor initializer list).
+     *
+     * Output layout (e_f_g):
+     *   - On return, 'e_f_g[0]' = e, 'e_f_g[1]' = f, 'e_f_g[2]' = g.
+     *
+     * @tparam T
+     *   Scalar numeric type used for all computations (e.g., 'float', 'double').
+     *
+     * @param second_fundamental
+     *   Pointer to a contiguous array holding the per-triangle second fundamental form
+     *   measurements. It must contain at least 12 entries:
+     *     - indices '0..5'  : normal-difference samples forming the RHS vector N;
+     *     - indices '6..11' : three '(du, dv)' pairs describing local parameter-space edge
+     *                         directions used to build the design matrix E.
+     *
+     * @param e_f_g
+     *   Pointer to an array of 3 elements where the estimated second fundamental form
+     *   coefficients will be written:
+     *     - 'e_f_g[0]' := e
+     *     - 'e_f_g[1]' := f
+     *     - 'e_f_g[2]' := g
+     *
+     * @note
+     *   This helper assumes that the input data has already been assembled consistently
+     *   in the correct local parameterization of the triangle. It does not perform any
+     *   validation of geometry or parameterization consistency; it only performs the
+     *   small linear-algebra solve.
+     *
+     * @warning
+     *   If both the unregularized and the regularized Cholesky solves fail (e.g., in
+     *   highly degenerate geometric configurations), 'e_f_g' will still be written
+     *   with the contents of the last attempted solution, which may be undefined or
+     *   numerically unstable. Callers may want to extend this function to propagate
+     *   a success/failure flag if they need robust error handling.
+     */
+
+    template <typename T>
+    void leastSquares(const T* second_fundamental, T* e_f_g)
+    {
+        // N is the 6x1 RHS vector storing measured normal differences second_fundamental[0..5]
+        basematrix<T, 6, 1> N({ second_fundamental[0],second_fundamental[1],second_fundamental[2],
+                        second_fundamental[3],second_fundamental[4],second_fundamental[5] });
+        // E is the 6x3 matrix storing the local edge differences second_fundamental[6..17]
+        // arranged as rows: [du1 dv1 0 0 du1 dv1; du2 dv2 0 0 du2 dv2; du3 dv3 0 0 du3 dv3]
+        basematrix<T, 6, 3> E({ second_fundamental[6], second_fundamental[7],0,0,second_fundamental[6],second_fundamental[7] ,
+                       second_fundamental[8], second_fundamental[9],0,0,second_fundamental[8],second_fundamental[9] ,
+                      second_fundamental[10], second_fundamental[11],0,0,second_fundamental[10],second_fundamental[11] });
+
+        // Transpose of E (3x6)
+        basematrix<T, 3, 6> Trans_E = E.transpose();
+        // Compute normal equations components
+        basematrix<T, 3, 3> tr_x_e = Trans_E * E;           // yields the symmetric 3x3 normal matrix -> E^T * E (3x3)
+        basematrix<T, 3, 1> rhs = Trans_E * N;              // accumulates  E^T * N (3x1)
+        basematrix<T, 3, 1> sol;                            // will hold [ee ff gg]^T
+        // Solving tr_x_e * sol = rhs recovers[ee, ff, gg] ^ T.
+        // Cholesky is used because E^T*E is symmetric positive semi-definite.
+        if (!cholesky_solve_3x3<T>(tr_x_e, rhs, sol)) {
+            // If the first solve fails(e.g., because E^T*E is near-singular), 
+            // the diagonal gets a tiny TOLLERANCE<double> bump, 
+            // effectively applying Tikhonov regularization, and the solve is retried.
+            basematrix<T, 3, 3> reg = tr_x_e;
+            for (int i = 0; i < 3; ++i) reg[i * 3 + i] += TOLLERANCE<T>;
+            cholesky_solve_3x3<T>(reg, rhs, sol);
+        }
+
+        e_f_g[0] = sol[0];
+        e_f_g[1] = sol[1];
+        e_f_g[2] = sol[2];
+    }
+
+
+
+
 
 };
 #endif // __algebra_h__

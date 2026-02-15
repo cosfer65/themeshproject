@@ -89,6 +89,25 @@ public:
             return;
         if (!m_parts[0]->curvatures_computed())
             return;
+
+        double max_abs_gauss = 0.;
+        double min_abs_gauss = std::numeric_limits<double>::max();
+        for (auto& part : m_parts) {
+            for (const auto& v : part->get_vertices()) {
+                if (v.second->curvature_data.absKmax > max_abs_gauss)
+                    max_abs_gauss = v.second->curvature_data.absKmax;
+                if (v.second->curvature_data.absKmax < min_abs_gauss)
+                    min_abs_gauss = v.second->curvature_data.absKmax;
+            }
+        }
+        double range = max_abs_gauss - min_abs_gauss;
+        double scale = range > 0. ? 1. / range : 1.;
+        for (auto& part : m_parts) {
+            for (const auto& v : part->get_vertices()) {
+                v.second->curvature_data.absKmax *= scale;
+            }
+        }
+#if 0
         double max_abs_gauss = 0.;
         double min_abs_gauss = std::numeric_limits<double>::max();
         for (auto& part : m_parts) {
@@ -106,6 +125,7 @@ public:
                 v.second->curvature_data.absGaussCurvature *= scale;
             }
         }
+#endif
     }
 };
 

@@ -53,8 +53,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 /// `mesh_tools` configures the main window, initializes the mesh view,
 /// and forwards input and render callbacks to the `mesh_view` instance.
 class mesh_tools : public gl_application {
-    /// Title bar text for the main window.
-    char m_szTitle[MAX_LOADSTRING];
 
     /// Mesh view handler responsible for OpenGL rendering and user interaction.
     std::unique_ptr<mesh_view> m_mesh_view;
@@ -74,7 +72,8 @@ public:
     /// @param hInstance Handle to the current application instance.
     /// @return Returns 1 on success.
     virtual int precreate_window(HINSTANCE hInstance) {
-        char m_szWindowClass[MAX_LOADSTRING];            // the main window class name
+        char m_szTitle[MAX_LOADSTRING];
+        char m_szWindowClass[MAX_LOADSTRING];
         LoadString(hInstance, IDS_APP_TITLE, m_szTitle, MAX_LOADSTRING);
         LoadString(hInstance, IDC_MESH_TOOLS, m_szWindowClass, MAX_LOADSTRING);
         szWindowClass = m_szWindowClass;

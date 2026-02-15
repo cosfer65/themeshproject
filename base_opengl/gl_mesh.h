@@ -141,7 +141,7 @@ namespace base_opengl {
                 mdata.normals.push_back(face_normal.z());
                 mdata.indices.push_back(static_cast<unsigned int>(i1));
                 if (mesh->curvatures_computed()) {
-                    float curvature = float(vertices.at(v_ids[i])->curvature_data.absGaussCurvature);
+                    float curvature = float(vertices.at(v_ids[i])->curvature_data.absKmax);//  absGaussCurvature);
                     mdata.curvatures.push_back(curvature);
                     mdata.curvatures.push_back(curvature);
                     mdata.curvatures.push_back(0.75f);
