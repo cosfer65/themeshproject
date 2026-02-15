@@ -8,7 +8,7 @@
 #include "geometry.h"
 #include "algebra.h"
 
-#include "mesh.h"
+#include "he_mesh.h"
 
 namespace base_math {
     //  This function computes the Voronoi area weight of a vertex in a triangle of a half-edge mesh. 
@@ -29,7 +29,7 @@ namespace base_math {
         // Get the coordinates of vertex v
         basevector<T, 3>& P = v.coords;
         // Get the other two vertices of the triangle face f
-        std::pair<size_t, size_t> other = f.get_other_vertices(v_id);
+        std::pair<size_t, size_t> other = f.get_incident_vertices(v_id);
         basevector<T, 3>& Q = mesh.vertices[other.first]->coords;
         basevector<T, 3>& R = mesh.vertices[other.second]->coords;
 

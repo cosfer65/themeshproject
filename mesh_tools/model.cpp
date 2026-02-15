@@ -1,7 +1,7 @@
 // Loads and normalizes 3D mesh models from supported file formats (currently Wavefront OBJ).
 #include <fstream>
 
-#include "mesh.h"
+#include "he_mesh.h"
 
 #include "model.h"
 #include "string_utils.h"
@@ -65,6 +65,7 @@ static void recalculate_model(model* mdl) {
     }
     dvec3 bbcenter = bbox_center(bbox);
     for (auto part : mdl->get_parts()) {
+        part->break_quads();
         part->translate(dvec3(-bbcenter.x(), -bbcenter.y(), -bbcenter.z()));
         part->compute_face_normals();
         part->compute_face_properties();
@@ -136,7 +137,28 @@ static bool load_obj(const std::string& fnm, model* mdl) {
                 size_t idx1 = static_cast<size_t>(std::stoull(v1[0]));
                 size_t idx2 = static_cast<size_t>(std::stoull(v2[0]));
                 size_t idx3 = static_cast<size_t>(std::stoull(v3[0]));
-                mesh->add_face(face_count, idx1, idx2, idx3);
+                if (idx1 == 0 || idx2 == 0 || idx3 == 0) {
+                    // OBJ indices are 1-based; zero is invalid
+                    continue;
+                }
+                if (idx1 >= vertex_count || idx2 >= vertex_count || idx3 >= vertex_count) {
+                    // Index out of bounds; skip this face
+                    continue;
+                }
+                if (tokens.size() > 4) {
+                    // More than 3 vertices per face
+                    auto v4 = splitString(tokens[4], '/');
+                    size_t idx4 = static_cast<size_t>(std::stoull(v4[0]));
+                    if (idx4 == 0 || idx4 >= vertex_count) {
+                        // Index out of bounds; skip this face
+                        continue;
+                    }
+                    mesh->add_face(face_count, idx1, idx2, idx3, idx4);
+                }
+                else {
+                    mesh->add_face(face_count, idx1, idx2, idx3);
+                }
+
                 ++face_count;
             }
         }

@@ -33,7 +33,7 @@
     <ClInclude Include="quaternion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mesh.h">
+    <ClInclude Include="he_mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="string_utils.h">

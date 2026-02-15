@@ -201,7 +201,28 @@ namespace base_math {
         size_t id;
 
         /// Vertex ids (indices into the mesh vertex map).
-        size_t v1, v2, v3;
+        size_t v1, v2, v3, v4;
+
+        /**
+         * @brief Enumeration of face types supported by the mesh.
+         *
+         * This enum defines the possible geometric types for a face in the mesh.
+         * Currently the mesh implementation primarily handles triangular faces,
+         * but this enumeration provides extensibility for supporting quadrilateral
+         * faces in future mesh processing operations.
+         *
+         * @note While FACE_TYPE_QUAD is defined, the current implementation focuses
+         *       on triangular faces. Quad support may require additional half-edge
+         *       connectivity logic.
+         */
+        enum FACE_TYPE {
+            FACE_TYPE_UNKNOWN = 0,   ///< Face type has not been determined or is invalid.
+            FACE_TYPE_TRIANGLE = 1,  ///< Triangular face with three vertices (v1, v2, v3).
+            FACE_TYPE_QUAD = 2       ///< Quadrilateral face with four vertices (v1, v2, v3, v4).
+        };// face_type;
+
+        /// Type classification for this face instance (triangle, quad, or unknown).
+        FACE_TYPE ftype;
 
         /// Pointer to one of the three half-edges that bound this face.
         half_edge<T>* first_edge;
@@ -223,10 +244,22 @@ namespace base_math {
          * @param v3_ Third vertex id.
          */
         face(size_t id_, size_t v1_, size_t v2_, size_t v3_)
-            : id(id_), v1(v1_), v2(v2_), v3(v3_), first_edge(nullptr) {
+            : id(id_), v1(v1_), v2(v2_), v3(v3_), ftype(FACE_TYPE_TRIANGLE), first_edge(nullptr) {
         }
 
-        std::pair<size_t, size_t> get_other_vertices(size_t v_id) {
+        /**
+         * @brief Construct a triangular face with the provided id and vertices.
+         * @param id_ Face identifier.
+         * @param v1_ First vertex id.
+         * @param v2_ Second vertex id.
+         * @param v3_ Third vertex id.
+         * @param v4_ Fourth vertex id (for quadrilateral faces).
+         */
+        face(size_t id_, size_t v1_, size_t v2_, size_t v3_, size_t v4_)
+            : id(id_), v1(v1_), v2(v2_), v3(v3_), v4(v4_), ftype(FACE_TYPE_QUAD), first_edge(nullptr) {
+        }
+
+        std::pair<size_t, size_t> get_incident_vertices(size_t v_id) {
             if (v_id == v1)
                 return std::pair<size_t, size_t>(v2, v3);
             else if (v_id == v2)
@@ -447,6 +480,47 @@ namespace base_math {
             return id;
         }
 
+        size_t add_face(size_t id, size_t i1, size_t i2, size_t i3, size_t i4) {
+            face<T>* f = new face<T>(id, i1, i2, i3, i4);
+            faces[id] = f;
+            return id;
+        }
+
+        void break_quads() {
+            std::vector<face<T>*> quads;
+            for (auto f_pair : faces) {
+                face<T>* f = f_pair.second;
+                if (f->ftype == face<T>::FACE_TYPE_QUAD) {
+                    quads.push_back(f);
+                }
+            }
+            size_t next_face_id = faces.size() + 1;
+
+            for (face<T>* f : quads) {
+                // Add two new triangular faces to replace the quad
+                // better select the shorter diagonal to split the quad
+                T diag1 = (basevector<T, 3>(vertices[f->v3]->coords - vertices[f->v1]->coords)).length();   
+                T diag2 = (basevector<T, 3>(vertices[f->v4]->coords - vertices[f->v2]->coords)).length();
+                if (diag2 < diag1) {
+                    // Split along v2-v4
+                    add_face(next_face_id, f->v1, f->v2, f->v4);
+                    ++next_face_id;
+                    add_face(next_face_id, f->v2, f->v3, f->v4);
+                    ++next_face_id;
+                } else {
+                    // Split along v1-v3
+                    add_face(next_face_id, f->v1, f->v2, f->v3);
+                    ++next_face_id;
+                    add_face(next_face_id, f->v1, f->v3, f->v4);
+                    ++next_face_id;
+                }
+                // Optionally remove the original quad face from the mesh
+                faces.erase(f->id);
+                delete f; // Note: this would require careful memory management
+            }
+        }
+
+
         /**
         * @brief Retrieve a half-edge given source and target vertex ids.
         * @param v1 Source vertex id.
@@ -613,7 +687,7 @@ namespace base_math {
             // Iterate over all triangles sharing vertex v_id
             for (size_t f_id : v.incident_faces) {
                 face<T>& f = *(faces[f_id]);
-                std::pair<size_t, size_t> other = f.get_other_vertices(v_id);
+                std::pair<size_t, size_t> other = f.get_incident_vertices(v_id);
                 // Get vertices of the triangle (P, Q, R)
                 basevector<T, 3>& Q = vertices[other.first]->coords;
                 basevector<T, 3>& R = vertices[other.second]->coords;
@@ -687,7 +761,7 @@ namespace base_math {
             ring_edges.reserve(v.incident_faces.size());
             for (size_t face_id : v.incident_faces) {
                 face<T>* f = faces[face_id];
-                auto ov = f->get_other_vertices(v_id);
+                auto ov = f->get_incident_vertices(v_id);
                 ring_edges.emplace_back(ov.first, ov.second);
             }
             order_chain(ring_edges);

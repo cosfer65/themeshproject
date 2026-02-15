@@ -2,7 +2,7 @@
 
 #include "vector.h"
 
-#include "mesh.h"
+#include "he_mesh.h"
 #include "mesh_curvature.h"
 
 using namespace base_math;

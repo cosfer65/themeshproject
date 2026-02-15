@@ -1,4 +1,4 @@
-#include "mesh.h"
+#include "he_mesh.h"
 #include "gl_mesh.h"
 
 namespace base_opengl {

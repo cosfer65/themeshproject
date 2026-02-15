@@ -12,7 +12,7 @@
 #include <vector>
 #include <string>
 
-#include "mesh.h"
+#include "he_mesh.h"
 
 /// \class model
 /// \brief Aggregates multiple half-edge mesh parts into a single logical model.
