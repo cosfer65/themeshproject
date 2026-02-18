@@ -26,7 +26,7 @@ using namespace base_math;
 using namespace base_opengl;
 
 /// external function to compute vertex curvatures, implemented in mesh_tools/curvature.cpp
-void compute_vertex_curvatures(half_edge_mesh<double>* mesh);
+void compute_vertex_curvatures(mesh<double>* mesh);
 
 
 /// @brief Internal data container for `mesh_view`.
@@ -246,19 +246,19 @@ void mesh_view::generate_model_curvature_view() {
     m_private->m_model_curvatures_min.clear();
     m_private->m_model_curvatures_max.clear();
     if (m_private->m_model) {
-        const auto& parts = m_private->m_model->get_parts();
+        const auto& parts = m_private->m_model->m_parts; // get_parts();
         m_private->m_model_curvatures_min.reserve(parts.size());
         m_private->m_model_curvatures_max.reserve(parts.size());
 
-        for (base_math::half_edge_mesh<double>* part : parts) {
-            double vl = part->average_edge_length * 0.5f;
+        for (base_math::mesh<double>* part : parts) {
+            double vl = part->getAverageEdgeLength() * 0.5f;
             auto mo_min = std::make_unique<visual_objects>();
             auto mo_max = std::make_unique<visual_objects>();
             // for each vertex, add curvature vectors
-            for (const auto& v : part->get_vertices()) {
-                dvec3 p = v.second->coords;
-                dvec3 k1_end = p + v.second->curvature_data.principal_directions[0] * vl;
-                dvec3 k2_end = p + v.second->curvature_data.principal_directions[1] * vl;
+            for (const auto& v : part->getVertices()) {
+                dvec3 p = v.second->position;
+                dvec3 k1_end = p + v.second->curvature_info.k_min * vl;
+                dvec3 k2_end = p + v.second->curvature_info.k_max * vl;
                 // add min curvature vector in red
                 mo_min->add_vector(to_fvec3(p), to_fvec3(k1_end));
                 // add max curvature vector in green
@@ -305,7 +305,7 @@ void mesh_view::generate_model_gauss_curvature_view() {
 ///
 /// Invokes curvature analysis on each mesh part of the currently loaded model by calling
 /// `compute_vertex_curvatures` for every `half_edge_mesh` instance. This function is expected
-/// to populate the `curvature_data` for each vertex (principal directions, curvature magnitudes, etc.).
+/// to populate the `curvature_info` for each vertex (principal directions, curvature magnitudes, etc.).
 ///
 /// Once curvature data is available, `generate_model_curvature_view()` is called to rebuild
 /// the OpenGL visualization objects used to display the principal curvature directions on screen.
@@ -315,8 +315,8 @@ void mesh_view::generate_model_gauss_curvature_view() {
 void mesh_view::do_curvature_calculation() {
     if (!m_private->m_model)
         return;
-    const auto& parts = m_private->m_model->get_parts();
-    for (base_math::half_edge_mesh<double>* part : parts) {
+    const auto& parts = m_private->m_model->m_parts; // get_parts();
+    for (base_math::mesh<double>* part : parts) {
         compute_vertex_curvatures(part);
     }
     generate_model_curvature_view();
@@ -344,15 +344,15 @@ void mesh_view::do_curvature_calculation() {
 void mesh_view::generate_model_normals() {
     m_private->m_face_normals.clear();
     if (m_private->m_model) {
-        const auto& parts = m_private->m_model->get_parts();
+        const auto& parts = m_private->m_model->m_parts; // get_parts();
         m_private->m_face_normals.reserve(parts.size());
 
-        for (base_math::half_edge_mesh<double>* part : parts) {
-            float vl = float(part->average_edge_length * 0.5f);
-            part->compute_face_normals();
-            part->compute_face_properties();
+        for (base_math::mesh<double>* part : parts) {
+            float vl = float(part->getAverageEdgeLength()) * 0.5f;
+            part->computeFaceNormals();
+            part->computeFaceProperties();
             auto mo = std::make_unique<visual_objects>();
-            for (const auto& face : part->faces) {
+            for (const auto& face : part->getFaces()) {
                 fvec3 face_normal = to_fvec3(face.second->normal);
                 fvec3 face_center = to_fvec3(face.second->center);
                 fvec3 normal_end = face_center + face_normal * vl;
@@ -458,10 +458,10 @@ void mesh_view::build_model_representation() {
     m_private->m_draw_parts.clear();
 
     if (m_private->m_model) {
-        const auto& parts = m_private->m_model->get_parts();
+        const auto& parts = m_private->m_model->m_parts;
         m_private->m_draw_parts.reserve(parts.size());
 
-        for (const base_math::half_edge_mesh<double>* part : parts) {
+        for (const base_math::mesh<double>* part : parts) {
             mesh_data md;
             collect_mesh_data(part, md);
             auto prim = std::make_unique<gl_prim>();

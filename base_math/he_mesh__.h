@@ -1,5 +1,5 @@
-#ifndef __mesh_h__
-#define __mesh_h__
+#ifndef __he_mesh_h__
+#define __he_mesh_h__
 
 /**
  * @file mesh.h
@@ -1126,4 +1126,4 @@ namespace base_math {
         return create_from_mesh_file<T, Tinput>("resources\\models\\unit_torus.prim");
     }
 }
-#endif // __mesh_h__
+#endif // __he_mesh_h__

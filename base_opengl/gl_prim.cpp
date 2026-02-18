@@ -1,5 +1,5 @@
 #include "gl_graphics.h"
-#include "he_mesh.h"
+#include "mesh.h"
 #include "gl_prim.h"
 
 namespace base_opengl {

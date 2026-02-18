@@ -9,5 +9,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)runtime</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>&gt;&gt; c:\temp\results2.txt</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

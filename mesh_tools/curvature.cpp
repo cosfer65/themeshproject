@@ -2,7 +2,7 @@
 
 #include "vector.h"
 
-#include "he_mesh.h"
+#include "mesh.h"
 #include "mesh_curvature.h"
 
 using namespace base_math;
@@ -200,15 +200,17 @@ Notes
     - The normals passed to `convert3dTo2dCoords` are the three vertex normals of `cur_face`,
       which are used to measure how the normal field bends across the face.
 */
-static void prepareSecondFundamentalCoefficients(half_edge_mesh<double>& mesh, const face<double>& cur_face, const dvec3& u_f, const dvec3& v_f, double* results)
+static void prepareSecondFundamentalCoefficients(mesh<double>& fmesh, const meshFace<double>& cur_face, const dvec3& u_f, const dvec3& v_f, double* results)
 {
     dvec3 elemCentroid = cur_face.center;
-    dvec3 world_coords[3] = { mesh.vertices[cur_face.v1]->coords, mesh.vertices[cur_face.v2]->coords,mesh.vertices[cur_face.v3]->coords };
+    dvec3 world_coords[3] = { fmesh.getVertices()[cur_face.vertices[0]->id]->position, 
+                                fmesh.getVertices()[cur_face.vertices[1]->id]->position, 
+                                fmesh.getVertices()[cur_face.vertices[2]->id]->position };
     dvec2 local_coords[3];
     worldCoordsToFaceCoords(u_f, v_f, world_coords, elemCentroid, local_coords);
-    const dvec3& node_normal_1 = mesh.vertices[cur_face.v1]->normal;
-    const dvec3& node_normal_2 = mesh.vertices[cur_face.v2]->normal;
-    const dvec3& node_normal_3 = mesh.vertices[cur_face.v3]->normal;
+    const dvec3& node_normal_1 = fmesh.getVertices()[cur_face.vertices[0]->id]->normal;
+    const dvec3& node_normal_2 = fmesh.getVertices()[cur_face.vertices[1]->id]->normal;
+    const dvec3& node_normal_3 = fmesh.getVertices()[cur_face.vertices[2]->id]->normal;
     dmat2x3 uv_map({ u_f.x(), u_f.y(), u_f.z(), v_f.x(), v_f.y(), v_f.z() });
     convert3dTo2dCoords(uv_map, local_coords, { node_normal_1, node_normal_2, node_normal_3 }, results);
 }
@@ -417,9 +419,9 @@ Notes
     - Any changes to the layout of `form_II` must be mirrored in `leastSquares` and in
       `prepareSecondFundamentalCoefficients`, as they form a tightly coupled data pipeline.
 */
-static void computeSecondFundamentalFromComponents(half_edge_mesh<double>* mesh,
-    face<double>& n_face,            // The specific triangle face to analyze
-    vertex<double>& currNode,        // Current vertex (note: appears unused!)
+static void computeSecondFundamentalFromComponents(mesh<double>* fmesh,
+    meshFace<double>& n_face,            // The specific triangle face to analyze
+    meshVertex<double>& currNode,        // Current vertex (note: appears unused!)
     dvec3& u_f, dvec3& v_f,          // Local tangent basis vectors for the face
     double* e_f_g)                // Output: [ee, ff, gg] coefficients
 {
@@ -432,7 +434,7 @@ static void computeSecondFundamentalFromComponents(half_edge_mesh<double>* mesh,
     // Projects the triangle into 2D local coordinates using basis(u_f, v_f)
     // Measures how vertex normals change across the triangle
     // Stores edge differences in both normal space and position space
-    prepareSecondFundamentalCoefficients(*mesh, n_face, u_f, v_f, fdifferences);
+    prepareSecondFundamentalCoefficients(*fmesh, n_face, u_f, v_f, fdifferences);
     // Solve for ee,ff,gg using least squares
     // Treats the problem as a linear system : E * [ee, ff, gg] ^ T = N
     // Uses Cholesky decomposition to solve the symmetric normal equations
@@ -551,7 +553,7 @@ after the swap step, index 0 is guaranteed to be the smaller value.
 - absKmin, absKmax (outputs): magnitudes of the principal curvatures.
 - signGauss, signMean (outputs): sign indicators (?1, 0, +1-ish via tolerance) for Gaussian and “mean” curvature.
 */
-void transformComponentsToCurvatureData(const double* efg, VertexCurvatureData<double>& curvature_data)
+void transformComponentsToCurvatureData(const double* efg, curvatureData<double>& curvature_data)
 {
     // The Weingarten (shape operator) matrix in this vertex frame is effectively:
     // W = | e  f |
@@ -584,30 +586,30 @@ void transformComponentsToCurvatureData(const double* efg, VertexCurvatureData<d
     // -  k^2 - 2Hk + k = 0
     std::tuple<double, double> res;
     solve_quadratic<double>(1, -2 * Mean_curvature, Gauss_curvature, res);
-    curvature_data.principal_curvatures[0] = std::get<0>(res);
-    curvature_data.principal_curvatures[1] = std::get<1>(res);
-    if (curvature_data.principal_curvatures[0] > curvature_data.principal_curvatures[1]) {
-        std::swap(curvature_data.principal_curvatures[0], curvature_data.principal_curvatures[1]);
+    curvature_data.k_min = std::get<0>(res);
+    curvature_data.k_max = std::get<1>(res);
+    if (curvature_data.k_min > curvature_data.k_max) {
+        std::swap(curvature_data.k_min, curvature_data.k_max);
     }
     // Determine signs of Gaussian and Mean curvature, and magnitudes of principal curvatures
-    double mean = double(0.5 * (curvature_data.principal_curvatures[0] + curvature_data.principal_curvatures[1]));
+    double mean = double(0.5 * (curvature_data.k_min + curvature_data.k_max));
     curvature_data.signGauss = 0;
     if (mean > TOLLERANCE<double>)
         curvature_data.signMean = 1;
     else if (mean < -TOLLERANCE<double>)
         curvature_data.signMean = -1;
-    if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] > TOLLERANCE<double>)
+    if (curvature_data.k_min * curvature_data.k_max > TOLLERANCE<double>)
         curvature_data.signGauss = 1;
-    else if (curvature_data.principal_curvatures[0] * curvature_data.principal_curvatures[1] < -TOLLERANCE<double>)
+    else if (curvature_data.k_min * curvature_data.k_max < -TOLLERANCE<double>)
         curvature_data.signGauss = -1;
     // Store absolute values of principal curvatures
-    if (fabs(curvature_data.principal_curvatures[0]) < fabs(curvature_data.principal_curvatures[1])) {
-        curvature_data.absKmin = double(fabs(curvature_data.principal_curvatures[0]));
-        curvature_data.absKmax = double(fabs(curvature_data.principal_curvatures[1]));
+    if (fabs(curvature_data.k_min) < fabs(curvature_data.k_max)) {
+        curvature_data.absKmin = double(fabs(curvature_data.k_min));
+        curvature_data.absKmax = double(fabs(curvature_data.k_max));
     }
     else {
-        curvature_data.absKmax = double(fabs(curvature_data.principal_curvatures[0]));
-        curvature_data.absKmin = double(fabs(curvature_data.principal_curvatures[1]));
+        curvature_data.absKmax = double(fabs(curvature_data.k_min));
+        curvature_data.absKmin = double(fabs(curvature_data.k_max));
     }
 }
 
@@ -653,7 +655,7 @@ The function:
 -  Computes the 2D eigenvectors of W corresponding to the eigenvalues in princ.
 -  Converts those 2D vectors into 3D directions using the vertex tangent basis (u_p, v_p) via principalDirections2Dto3D.
 */
-void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v_p, dvec3& dmin, dvec3& dmax)
+void calculatePrincipalDirections(double* W, double k_min, double k_max, dvec3& u_p, dvec3& v_p, dvec3& dmin, dvec3& dmax)
 {
     // Compute eigenvector components with numerical stability checks
     /*
@@ -672,8 +674,8 @@ void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v
     -  denom_1 = a - princ[0], denom_2 = a - princ[1]
     So these are the denominators for the formula x = -b / (a - E).
     */
-    double denom_1 = W[0] - princ[0];
-    double denom_2 = W[0] - princ[1];
+    double denom_1 = W[0] - k_min;
+    double denom_2 = W[0] - k_max;
 
     // Handle near-zero denominators to prevent division by zero
     /*
@@ -698,7 +700,7 @@ void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v
     double eigvec_2 = -W[1] / denom_2;
 
     // Determine which eigenvector corresponds to min/max curvature and convert to 3D
-    if (fabs(princ[0]) <= fabs(princ[1]))
+    if (fabs(k_min) <= fabs(k_max))
     {
         double princ_dir_min[] = { eigvec_1, 1 };
         double princ_dir_max[] = { eigvec_2, 1 };
@@ -724,7 +726,7 @@ void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v
 //  
 // Inputs and Outputs
 // Inputs:
-// -  half_edge_mesh<double>* mesh
+// -  mesh<double>* mesh
 // Full mesh structure. Needed to:
 // -  Access incident faces of the vertex (via incident_faces + mesh->faces).
 // -  Compute per-face weights via voronoi_based_weighting.
@@ -736,7 +738,7 @@ void calculatePrincipalDirections(double* W, double* princ, dvec3& u_p, dvec3& v
 // Outputs:
 // -  principal_dir_min - 3D direction of minimum principal curvature at the vertex.
 // -  principal_dir_max - 3D direction of maximum principal curvature at the vertex.
-static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<double>& v) {
+static void calculate_vertex_curvatures(mesh<double>* fmesh, meshVertex<double>& v) {
     // -  sum_ee, sum_ff, sum_gg -> running area - weighted sums of second fundamental form components in the vertex frame :
     // -  ee -> curvature in local u direction
     // -  ff -> mixed term
@@ -754,9 +756,11 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
     create_uv_reference_plane(v.normal, u_vertex, v_vertex);
 
     // Iterate over all faces incident to the vertex
-    for (auto& i : v.incident_faces) {
+    for (auto& i : v.adjacentFaces) {
         // Get the face and its normal
-        face<double>* n_face = mesh->faces[i];
+        meshFace<double>* n_face = fmesh->getFaces()[i->id];
+        if (!n_face)
+            continue;
         dvec3& face_normal = n_face->normal;
 
         // Create local tangent basis for the face
@@ -780,7 +784,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
         // -  e_f_g[2]: curvature along v_face.
         // Note: they are still in the face tangent frame, not yet in the vertex tangent frame.
         double e_f_g[3];
-        computeSecondFundamentalFromComponents(mesh, *n_face, v, u_face, v_face, e_f_g);
+        computeSecondFundamentalFromComponents(fmesh, *n_face, v, u_face, v_face, e_f_g);
 
         // Transform face-frame [e, f, g] into vertex-frame [e_v, f_v, g_v]
         // -  convertSecondFundamentalFormComponentsToVertexFrame:
@@ -799,7 +803,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
         // -  v_area is an area-like weight for the pair (vertex v, face n_face):
         // -    Typically a Voronoi area or similar local area assigned to v from that face.
         // -    Encodes how much of the surface "near" v is contributed by this face.
-        double v_area = voronoi_based_weighting<double>(*mesh, v.id, *n_face);
+        double v_area = voronoi_based_weighting<double>(*fmesh, v.id, *n_face);
 
         // -  Each coefficient is summed with this area weight.
         // -  Conceptually: you're computing an area-weighted average of the second fundamental form over the 1-ring of faces around v.        sum_ee += v_area * e_f_g_v[0];
@@ -831,7 +835,7 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
     double W[] = { normalized_ee,normalized_ff,normalized_gg };
 
     // Derive principal curvature values and curvature signs
-    VertexCurvatureData<double>& curvature_data = v.curvature_data;
+    curvatureData<double>& curvature_data = v.curvature_info;
 
     // -  transformComponentsToCurvatureData:
     // -    Computes Gaussian curvature K = e*g - f^2.
@@ -839,10 +843,10 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
     // -    Solves the eigenvalue problem of W to get the 2 principal curvatures (principal_curvs[0], principal_curvs[1]).
     // -    Determines sign information and absolute magnitudes.
     // At this point, we have the eigenvalues (principal curvature magnitudes) at the vertex.
-    transformComponentsToCurvatureData(W, curvature_data);
+    transformComponentsToCurvatureData(W, v.curvature_info);
 
     //Get position of Node
-    //dvec3 Node_3d = v.coords;
+    //dvec3 Node_3d = v.position;
 
     // Compute principal directions in 3D
     // -  calculatePrincipalDirections:
@@ -852,19 +856,20 @@ static void calculate_vertex_curvatures(half_edge_mesh<double>* mesh, vertex<dou
     // So:
     // -  curvature_data.principal_directions[0]: 3D direction of minimum curvature.
     // -  curvature_data.principal_directions[1]: 3D direction of maximum curvature.
-    calculatePrincipalDirections(W, curvature_data.principal_curvatures, u_vertex, v_vertex,
-        curvature_data.principal_directions[0], curvature_data.principal_directions[1]);
+    calculatePrincipalDirections(W, v.curvature_info.k_min, v.curvature_info.k_max, u_vertex, v_vertex,
+        v.curvature_info.k_min_dir, v.curvature_info.k_max_dir);
 }
 
 // compute_vertex_curvatures computes curvature information for all vertices in the mesh.
-void compute_vertex_curvatures(half_edge_mesh<double>* mesh) {
+void compute_vertex_curvatures(mesh<double>* fmesh) {
     // Precompute face properties and vertex normals
-    mesh->compute_face_properties();
-    mesh->compute_vertex_normals();
+    fmesh->computeFaceProperties();
+    fmesh->computeVertexNormals();
 
+    fmesh->curvatures_computed() = false;
     // Compute curvature for each vertex in the mesh
-    for (auto& v : mesh->vertices) {
-        calculate_vertex_curvatures(mesh, *(v.second));
+    for (auto& v : fmesh->getVertices()) {
+        calculate_vertex_curvatures(fmesh, *(v.second));
     }
-    mesh->curvatures_computed() = true;
+    fmesh->curvatures_computed() = true;
 }

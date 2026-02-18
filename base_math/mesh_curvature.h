@@ -8,7 +8,7 @@
 #include "geometry.h"
 #include "algebra.h"
 
-#include "he_mesh.h"
+#include "mesh.h"
 
 namespace base_math {
     //  This function computes the Voronoi area weight of a vertex in a triangle of a half-edge mesh. 
@@ -18,20 +18,24 @@ namespace base_math {
     //  -  f: the triangular face that contains the vertex v_id.
     //  -  Return value: a scalar T which is the area weight assigned to vertex v_id from triangle f.
     template <typename T>
-    T voronoi_based_weighting(half_edge_mesh<T>& mesh, size_t v_id, face<T>& f)
+    T voronoi_based_weighting(mesh<T>& fmesh, size_t v_id, meshFace<T>& f)
     {
         // Initialize area weight to zero
         T w_area = 0.0;
 
         // Get the vertex object from the mesh
-        vertex<T>& v = *(mesh.vertices[v_id]);
+        meshVertex<T>& v = *(fmesh.getVertices()[v_id]);
 
         // Get the coordinates of vertex v
-        basevector<T, 3>& P = v.coords;
+        basevector<T, 3>& P = v.position;
         // Get the other two vertices of the triangle face f
-        std::pair<size_t, size_t> other = f.get_incident_vertices(v_id);
-        basevector<T, 3>& Q = mesh.vertices[other.first]->coords;
-        basevector<T, 3>& R = mesh.vertices[other.second]->coords;
+        std::pair<meshVertex<T>*, meshVertex<T>*> other = f.getIncidentVertices(v_id);
+        if (!other.first || !other.second) {
+            // If the vertex is not part of the face, return zero area contribution
+            return w_area;
+        }
+        basevector<T, 3>& Q = other.first->position;
+        basevector<T, 3>& R = other.second->position;
 
         // Edge vectors
         basevector<T, 3> PR = R - P;

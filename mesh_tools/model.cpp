@@ -1,7 +1,7 @@
 // Loads and normalizes 3D mesh models from supported file formats (currently Wavefront OBJ).
 #include <fstream>
 
-#include "he_mesh.h"
+//#include "he_mesh.h"
 
 #include "model.h"
 #include "string_utils.h"
@@ -59,17 +59,17 @@ static dvec3 bbox_center(const basematrix<double, 2, 3>& bbox) {
  */
 static void recalculate_model(model* mdl) {
     basematrix<double, 2, 3> bbox(0);
-    for (auto part : mdl->get_parts()) {
-        basematrix<double, 2, 3> part_bbox = part->get_bounding_box();
+    for (auto part : mdl->m_parts) {
+        basematrix<double, 2, 3> part_bbox = part->getBoundingBox();
         expand_bbox(bbox, part_bbox);
     }
     dvec3 bbcenter = bbox_center(bbox);
-    for (auto part : mdl->get_parts()) {
-        part->break_quads();
+    for (auto part : mdl->m_parts) {
+        part->breakQuads();
         part->translate(dvec3(-bbcenter.x(), -bbcenter.y(), -bbcenter.z()));
-        part->compute_face_normals();
-        part->compute_face_properties();
-        part->compute_vertex_normals();
+        part->computeFaceNormals();
+        part->computeFaceProperties();
+        part->computeVertexNormals();
     }
 }
 
@@ -99,7 +99,7 @@ static bool load_obj(const std::string& fnm, model* mdl) {
     std::ifstream mdl_file(fnm);
     size_t vertex_count = 1;
     size_t face_count = 1;
-    base_math::half_edge_mesh<double>* mesh = nullptr;
+    base_math::mesh<double>* mesh = nullptr;
 
     if (mdl_file.is_open()) {
 
@@ -116,9 +116,9 @@ static bool load_obj(const std::string& fnm, model* mdl) {
             if (tokens[0] == "o") {
                 if (mesh != nullptr) {
                     // finalize previous mesh part
-                    mesh->average_edge_length = mesh->total_edge_length / mesh->half_edges.size();
+                    // mesh->average_edge_length = mesh->total_edge_length / mesh->getEdges().size();
                 }
-                mesh = new base_math::half_edge_mesh<double>();
+                mesh = new base_math::mesh<double>();
                 mdl->add_part(mesh);
             }
             else if (tokens[0] == "v") {
@@ -126,7 +126,7 @@ static bool load_obj(const std::string& fnm, model* mdl) {
                 double x = atof(tokens[1].c_str());
                 double y = atof(tokens[2].c_str());
                 double z = atof(tokens[3].c_str());
-                mesh->add_vertex(vertex_count, x, y, z);
+                mesh->addVertex(vertex_count, base_math::dvec3(x, y, z));
                 ++vertex_count;
             }
             else if (tokens[0] == "f") {
@@ -153,10 +153,10 @@ static bool load_obj(const std::string& fnm, model* mdl) {
                         // Index out of bounds; skip this face
                         continue;
                     }
-                    mesh->add_face(face_count, idx1, idx2, idx3, idx4);
+                    mesh->addFace(idx1, idx2, idx3, idx4);
                 }
                 else {
-                    mesh->add_face(face_count, idx1, idx2, idx3);
+                    mesh->addFace(idx1, idx2, idx3);
                 }
 
                 ++face_count;
@@ -165,7 +165,7 @@ static bool load_obj(const std::string& fnm, model* mdl) {
         mdl_file.close();
         if (mesh != nullptr) {
             // finalize last mesh part
-            mesh->average_edge_length = mesh->total_edge_length / mesh->half_edges.size();
+            // mesh->average_edge_length = mesh->total_edge_length / mesh->half_edges.size();
         }
         recalculate_model(mdl);
     }
