@@ -45,7 +45,7 @@ class model {
             double max_abs_curvature = 0.;
             double min_abs_curvature = std::numeric_limits<double>::max();
             for (auto& part : m_parts) {
-                for (const auto& v : part->getVertices()) {
+                for (const auto& v : part->vertices) {
                     if (v.second->curvature_info.absKmax > max_abs_curvature)
                         max_abs_curvature = v.second->curvature_info.absKmax;
                     if (v.second->curvature_info.absKmax < min_abs_curvature)
@@ -55,7 +55,7 @@ class model {
             double range = max_abs_curvature - min_abs_curvature;
             double scale = range > 0. ? 1. / range : 1.;
             for (auto& part : m_parts) {
-                for (const auto& v : part->getVertices()) {
+                for (const auto& v : part->vertices) {
                     v.second->curvature_info.absKmax *= scale;
                 }
             }
@@ -169,7 +169,7 @@ model* load_model(const std::string& fnm) {
 void print_mesh(const mesh<double>* m) {
 #if 0
     std::cout << "Vertices:--\n";
-    for (const auto& v : m->getVertices()) {
+    for (const auto& v : m->vertices) {
         std::cout << "Vertex " << v.first << ": (" << v.second->position.x() << ", " << v.second->position.y() << ", " << v.second->position.z() << ")\n";
         for (const auto& adj : v.second->adjacentFaces) {
             std::cout << "  Adjacent face: " << adj->id << "\n";
@@ -188,7 +188,7 @@ void print_mesh(const mesh<double>* m) {
     }
 #endif
     std::cout << "Faces:--\n";
-    for (const auto& f : m->getFaces()) {
+    for (const auto& f : m->faces) {
         std::cout << "Face " << f.first << ": vertices ";
         for (const auto& vert : f.second->vertices) {
             std::cout << vert->id << " ";
@@ -206,7 +206,7 @@ void print_mesh(const mesh<double>* m) {
 
 void print_mesh_normals(const mesh<double>* m) {
     std::cout << "Face normals:--\n";
-    for (const auto& f : m->getFaces()) {
+    for (const auto& f : m->faces) {
         std::cout << "Face " << f.first << ": normal (" << f.second->normal.x() << ", " << f.second->normal.y() << ", " << f.second->normal.z() << ")\n";
     }
 }
@@ -221,7 +221,7 @@ int main() {
     std::cout << "Model loaded successfully!" << std::endl;
     std::cout << "Number of parts: " << m->m_parts.size() << std::endl;
     for (size_t i = 0; i < m->m_parts.size(); ++i) {
-        std::cout << "Part " << i << ": " << m->m_parts[i]->getVertices().size() << " vertices, " << m->m_parts[i]->getFaces().size() << " faces\n";
+        std::cout << "Part " << i << ": " << m->m_parts[i]->vertices.size() << " vertices, " << m->m_parts[i]->faces.size() << " faces\n";
     }
     delete m;
 

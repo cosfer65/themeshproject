@@ -10,5 +10,6 @@
     <LocalDebuggerWorkingDirectory>$(SolutionDir)runtime</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>&gt;&gt; c:\temp\results2.txt</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArgumentsHistory>&gt;&gt; c:\temp\results2.txt|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>

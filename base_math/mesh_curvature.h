@@ -24,7 +24,7 @@ namespace base_math {
         T w_area = 0.0;
 
         // Get the vertex object from the mesh
-        meshVertex<T>& v = *(fmesh.getVertices()[v_id]);
+        meshVertex<T>& v = *(fmesh.vertices[v_id]);
 
         // Get the coordinates of vertex v
         basevector<T, 3>& P = v.position;

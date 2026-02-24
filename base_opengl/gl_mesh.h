@@ -116,8 +116,8 @@ namespace base_opengl {
         // this allows for proper duplication of vertices/normals per face
         // it is better for flat shading
         size_t index = mdata.vertices.size() / 3;
-        const std::map<size_t, meshVertex<T>*>& vertices = mesh->getVertices();
-        for (auto f_pair : mesh->getFaces()) {
+        const std::map<size_t, meshVertex<T>*>& vertices = mesh->vertices;
+        for (auto f_pair : mesh->faces) {
             meshFace<T>* f = f_pair.second;
             size_t v_ids[3] = { f->vertices[0]->id, f->vertices[1]->id, f->vertices[2]->id };
             fvec3 face_normal = fvec3(float(f->normal.x()), float(f->normal.y()), float(f->normal.z()));

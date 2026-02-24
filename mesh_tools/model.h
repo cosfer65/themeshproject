@@ -42,7 +42,7 @@ public:
         double max_abs_curvature = 0.;
         double min_abs_curvature = std::numeric_limits<double>::max();
         for (auto& part : m_parts) {
-            for (const auto& v : part->getVertices()) {
+            for (const auto& v : part->vertices) {
                 if (v.second->curvature_info.absKmax > max_abs_curvature)
                     max_abs_curvature = v.second->curvature_info.absKmax;
                 if (v.second->curvature_info.absKmax < min_abs_curvature)
@@ -52,7 +52,7 @@ public:
         double range = max_abs_curvature - min_abs_curvature;
         double scale = range > 0. ? 1. / range : 1.;
         for (auto& part : m_parts) {
-            for (const auto& v : part->getVertices()) {
+            for (const auto& v : part->vertices) {
                 v.second->curvature_info.absKmax *= scale;
             }
         }

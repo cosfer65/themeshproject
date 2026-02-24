@@ -54,12 +54,12 @@ static void Test_AddFace_BuildsEdgesAndAdjacency()
 
     m.addFace(1, 2, 3);
 
-    AssertEqualSizeT(3, m.getVertices().size(), "AddFace: vertex count");
-    AssertEqualSizeT(1, m.getFaces().size(), "AddFace: face count");
-    AssertEqualSizeT(3, m.getEdges().size(), "AddFace: edge count (triangle)");
+    AssertEqualSizeT(3, m.vertices.size(), "AddFace: vertex count");
+    AssertEqualSizeT(1, m.faces.size(), "AddFace: face count");
+    AssertEqualSizeT(3, m.edges.size(), "AddFace: edge count (triangle)");
 
     // Check that each vertex sees exactly one adjacent face
-    for (auto& vp : m.getVertices())
+    for (auto& vp : m.vertices)
     {
         AssertEqualSizeT(1, vp.second->adjacentFaces.size(), "AddFace: vertex adjacentFaces size == 1");
     }
@@ -74,10 +74,10 @@ static void Test_AddFace_QuadAndBreakQuads()
     m.addVertex(4, basevector<double, 3>(0.0, 1.0, 0.0));
 
     m.addFace(1, 2, 3, 4);
-    AssertEqualSizeT(1, m.getFaces().size(), "Quad: one face before breakQuads");
+    AssertEqualSizeT(1, m.faces.size(), "Quad: one face before breakQuads");
 
     m.breakQuads();
-    AssertEqualSizeT(2, m.getFaces().size(), "Quad: split into two triangles after breakQuads");
+    AssertEqualSizeT(2, m.faces.size(), "Quad: split into two triangles after breakQuads");
 }
 
 static void Test_ComputeFaceNormals_TriangleInXYPlane()
@@ -90,7 +90,7 @@ static void Test_ComputeFaceNormals_TriangleInXYPlane()
     m.addFace(1, 2, 3);
     m.computeFaceNormals();
 
-    const auto& faces = m.getFaces();
+    const auto& faces = m.faces;
     auto it = faces.begin();
     AssertTrue(it != faces.end(), "ComputeFaceNormals: face exists");
     if (it != faces.end())
@@ -115,7 +115,7 @@ static void Test_ComputeVertexNormals_FromFaceNormals()
     m.computeFaceNormals();
     m.computeVertexNormals();
 
-    for (auto& vp : m.getVertices())
+    for (auto& vp : m.vertices)
     {
         const basevector<double, 3>& n = vp.second->normal;
         AssertNear(0.0, n.x(), 1e-9, "ComputeVertexNormals: nx");
@@ -133,12 +133,11 @@ static void Test_RecenterMesh_MovesCentroidToOrigin()
     m.recenterMesh();
 
     double cx = 0.0;
-    for (auto& vp : m.getVertices())
+    for (auto& vp : m.vertices)
     {
         cx += vp.second->position.x();
     }
-    cx /= static_cast<double>(m.getVertices().size());
-
+    cx /= static_cast<double>(m.vertices.size());
     AssertNear(0.0, cx, 1e-12, "RecenterMesh: centroid x should be 0");
 }
 
@@ -154,7 +153,7 @@ static void Test_ComputeVerticesVoronoiArea_SimpleTriangle()
     m.computeVerticesVoronoiArea();
 
     // All Voronoi areas should be positive for this simple triangle
-    for (auto& vp : m.getVertices())
+    for (auto& vp : m.vertices)
     {
         AssertTrue(vp.second->voronoiArea > 0.0, "ComputeVerticesVoronoiArea: area > 0");
     }

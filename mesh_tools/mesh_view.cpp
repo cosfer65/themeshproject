@@ -255,10 +255,10 @@ void mesh_view::generate_model_curvature_view() {
             auto mo_min = std::make_unique<visual_objects>();
             auto mo_max = std::make_unique<visual_objects>();
             // for each vertex, add curvature vectors
-            for (const auto& v : part->getVertices()) {
+            for (const auto& v : part->vertices) {
                 dvec3 p = v.second->position;
-                dvec3 k1_end = p + v.second->curvature_info.k_min * vl;
-                dvec3 k2_end = p + v.second->curvature_info.k_max * vl;
+                dvec3 k1_end = p + v.second->curvature_info.k_min_dir * vl;
+                dvec3 k2_end = p + v.second->curvature_info.k_max_dir * vl;
                 // add min curvature vector in red
                 mo_min->add_vector(to_fvec3(p), to_fvec3(k1_end));
                 // add max curvature vector in green
@@ -352,7 +352,7 @@ void mesh_view::generate_model_normals() {
             part->computeFaceNormals();
             part->computeFaceProperties();
             auto mo = std::make_unique<visual_objects>();
-            for (const auto& face : part->getFaces()) {
+            for (const auto& face : part->faces) {
                 fvec3 face_normal = to_fvec3(face.second->normal);
                 fvec3 face_center = to_fvec3(face.second->center);
                 fvec3 normal_end = face_center + face_normal * vl;

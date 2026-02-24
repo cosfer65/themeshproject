@@ -196,9 +196,6 @@ namespace base_math {
     template <typename T>
     class mesh {
         size_t lastFaceID = 0;
-        std::map<size_t, meshVertex<T>*> vertices;
-        std::map<edge_descriptor, meshEdge<T>*> edges;
-        std::map<size_t, meshFace<T>*> faces;
         // average_edge_length: is the mean length of edges, useful for scale - dependent algorithms
         // (e.g., curvature estimation, smoothing step sizes, etc.).
         T average_edge_length = T(0);
@@ -258,6 +255,10 @@ namespace base_math {
             }
         }
     public:
+        std::map<size_t, meshVertex<T>*> vertices;
+        std::map<edge_descriptor, meshEdge<T>*> edges;
+        std::map<size_t, meshFace<T>*> faces;
+
         mesh() {}
         ~mesh() { cleanUp(); }
 
@@ -276,14 +277,6 @@ namespace base_math {
             faces.clear();
         }
 
-        const std::map<size_t, meshVertex<T>*>& getVertices() const { return vertices; }
-        const std::map<edge_descriptor, meshEdge<T>*>& getEdges() const { return edges; }
-        const std::map<size_t, meshFace<T>*>& getFaces() const { return faces; }
-
-        std::map<size_t, meshVertex<T>*>& getVertices() { return vertices; }
-        std::map<edge_descriptor, meshEdge<T>*>& getEdges() { return edges; }
-        std::map<size_t, meshFace<T>*>& getFaces() { return faces; }
-
         void addVertex(meshVertex<T>* vertex) { vertices[vertex->id] = const_cast<meshVertex<T>*>(vertex); }
         void addVertex(size_t id, const basevector<T, 3>& position) { vertices[id] = new meshVertex<T>(id, position); }
 
@@ -293,7 +286,6 @@ namespace base_math {
         bool& curvatures_computed() {
             return m_curvatures_computed;
         }
-
 
         T getAverageEdgeLength() const { return average_edge_length; }
 
