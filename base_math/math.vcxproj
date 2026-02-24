@@ -15,7 +15,6 @@
     <ClInclude Include="base_definitions.h" />
     <ClInclude Include="geometry.h" />
     <ClInclude Include="matrix.h" />
-    <ClInclude Include="he_mesh__.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="mesh_curvature.h" />
     <ClInclude Include="quaternion.h" />

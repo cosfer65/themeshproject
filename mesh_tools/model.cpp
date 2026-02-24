@@ -163,10 +163,7 @@ static bool load_obj(const std::string& fnm, model* mdl) {
             }
         }
         mdl_file.close();
-        if (mesh != nullptr) {
-            // finalize last mesh part
-            // mesh->average_edge_length = mesh->total_edge_length / mesh->half_edges.size();
-        }
+        // finalize last mesh part
         recalculate_model(mdl);
     }
     else {
