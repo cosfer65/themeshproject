@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "math_core", "math_core\math_core.vcxproj", "{25AB7455-E8A2-4972-A662-304BF922E680}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "app_core", "app_core\app_core.vcxproj", "{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{44AA85B6-BD1D-4989-9896-D5BA828545A7} = {44AA85B6-BD1D-4989-9896-D5BA828545A7}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gl_core", "gl_core\gl_core.vcxproj", "{44AA85B6-BD1D-4989-9896-D5BA828545A7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{25AB7455-E8A2-4972-A662-304BF922E680} = {25AB7455-E8A2-4972-A662-304BF922E680}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commons", "commons\commons.vcxproj", "{5B7F088C-7E69-4A03-9084-37DD790805F2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "themeshproject", "themeshproject\themeshproject.vcxproj", "{39C3DF9B-E898-43A1-8F08-57EFBD8E51B7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5} = {E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "surface_gen", "surface_gen\surface_gen.vcxproj", "{E97A260E-0376-4F72-8007-4F497A6B73F8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{25AB7455-E8A2-4972-A662-304BF922E680}.Debug|x64.ActiveCfg = Debug|x64
+		{25AB7455-E8A2-4972-A662-304BF922E680}.Debug|x64.Build.0 = Debug|x64
+		{25AB7455-E8A2-4972-A662-304BF922E680}.Release|x64.ActiveCfg = Release|x64
+		{25AB7455-E8A2-4972-A662-304BF922E680}.Release|x64.Build.0 = Release|x64
+		{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}.Debug|x64.ActiveCfg = Debug|x64
+		{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}.Debug|x64.Build.0 = Debug|x64
+		{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}.Release|x64.ActiveCfg = Release|x64
+		{E08B2B32-F758-4AC7-84E5-0C0AE9EA06F5}.Release|x64.Build.0 = Release|x64
+		{44AA85B6-BD1D-4989-9896-D5BA828545A7}.Debug|x64.ActiveCfg = Debug|x64
+		{44AA85B6-BD1D-4989-9896-D5BA828545A7}.Debug|x64.Build.0 = Debug|x64
+		{44AA85B6-BD1D-4989-9896-D5BA828545A7}.Release|x64.ActiveCfg = Release|x64
+		{44AA85B6-BD1D-4989-9896-D5BA828545A7}.Release|x64.Build.0 = Release|x64
+		{5B7F088C-7E69-4A03-9084-37DD790805F2}.Debug|x64.ActiveCfg = Debug|x64
+		{5B7F088C-7E69-4A03-9084-37DD790805F2}.Debug|x64.Build.0 = Debug|x64
+		{5B7F088C-7E69-4A03-9084-37DD790805F2}.Release|x64.ActiveCfg = Release|x64
+		{5B7F088C-7E69-4A03-9084-37DD790805F2}.Release|x64.Build.0 = Release|x64
+		{39C3DF9B-E898-43A1-8F08-57EFBD8E51B7}.Debug|x64.ActiveCfg = Debug|x64
+		{39C3DF9B-E898-43A1-8F08-57EFBD8E51B7}.Debug|x64.Build.0 = Debug|x64
+		{39C3DF9B-E898-43A1-8F08-57EFBD8E51B7}.Release|x64.ActiveCfg = Release|x64
+		{39C3DF9B-E898-43A1-8F08-57EFBD8E51B7}.Release|x64.Build.0 = Release|x64
+		{E97A260E-0376-4F72-8007-4F497A6B73F8}.Debug|x64.ActiveCfg = Debug|x64
+		{E97A260E-0376-4F72-8007-4F497A6B73F8}.Debug|x64.Build.0 = Debug|x64
+		{E97A260E-0376-4F72-8007-4F497A6B73F8}.Release|x64.ActiveCfg = Release|x64
+		{E97A260E-0376-4F72-8007-4F497A6B73F8}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1A322BD8-A00A-4570-A153-93E81B5916E4}
+	EndGlobalSection
+EndGlobal
