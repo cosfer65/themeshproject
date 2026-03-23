@@ -441,6 +441,30 @@ namespace base_math {
             faces.clear();
         }
 
+        void flip_face(meshFace<T>* f) {
+            std::reverse(f->vertices.begin(), f->vertices.end());
+            meshEdge<T>* e = f->firstEdge;
+            do {
+                std::swap(e->source, e->target);
+                e = e->nextEdge;    
+            } while (e != f->firstEdge);
+            f->normal = -f->normal; // flip the normal direction
+        }
+
+        void flip_face(size_t id) {
+            auto it = faces.find(id);
+            if (it != faces.end()) {
+                meshFace<T>* f = it->second;
+                flip_face(f);
+            }
+        }
+
+        void flip_all_faces() {
+            for (auto& f_pair : faces) {
+                flip_face(f_pair.first);
+            }
+        }
+
         /// @brief Insert an externally allocated vertex into the mesh.
         ///
         /// Ownership of @p vertex is transferred to the mesh.
