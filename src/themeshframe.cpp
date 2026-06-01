@@ -1,11 +1,8 @@
 #include "themeshframe.h"
 #include "themeshview.h"
 
-ViewWindow* meshFrameWindow::get_view() {
-    if (pView == nullptr) {
-        pView = new meshViewWindow();
-    }
-    return pView;
+btm::glView* meshFrameWindow::create_view() {
+    return new meshViewWindow();
 }
 
 LRESULT meshFrameWindow::OnMinimize(int wid, int hei) {
@@ -13,7 +10,7 @@ LRESULT meshFrameWindow::OnMinimize(int wid, int hei) {
     return 0;
 }
 
-LRESULT meshFrameWindow::OnMinimized(int wid, int hei) {
+LRESULT meshFrameWindow::OnMaximize(int wid, int hei) {
     OnSize(wid, hei);
     return 0;
 }

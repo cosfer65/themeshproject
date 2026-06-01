@@ -1,8 +1,8 @@
 #pragma once
 
 #include "matrix.h"
-#include "gl_shaders.h"
-#include "gl_window.h"
+#include "shaders.h"
+#include "window.h"
 
 class cModel;
 struct mesh_view_private;
@@ -32,7 +32,7 @@ struct view_state {
     }
 };
 
-class meshViewWindow : public glViewWindow {
+class meshViewWindow : public glView {
     bool init_done = false;
     bool dragging = false;                           ///< Indicates whether the user is currently dragging with the mouse (for panning)
     int last_mouse_x = 0;                            ///< Last recorded mouse X position (used for calculating deltas during dragging)
@@ -66,12 +66,13 @@ public:
     }
     void reset_view();
 
-    void step_simulation(float fElapsed) {};
-    void render_scene(base_math::fmat4& cam_matrix, base_math::fmat4& rot_mat, base_opengl::gl_shader* shdr);
-    virtual void render();
-    virtual int onCommand(int cmd);
-    virtual LRESULT OnSize(int cx, int cy);
+    int onMenuCommand(int cmd);
 
+    void step_simulation(float fElapsed) {};
+    void render_scene(btm::fmat4& cam_matrix, btm::fmat4& rot_mat, btm::gl_shader* shdr);
+    virtual void render();
+
+    virtual LRESULT OnSize(int cx, int cy);
     virtual void onMouseWheel(int delta, unsigned __int64 extra_btn);
     virtual void onMouseMove(int x, int y, unsigned __int64 extra);
     virtual void onLMouseDown(int x, int y, unsigned __int64 extra);

@@ -6,7 +6,7 @@ class cModel {
     bool m_curvatures_computed = false; ///< Flag indicating whether curvature has been calculated for the current model.
 	std::string m_name; ///< Name of the model, used for identification and display purposes.
     public:
-        std::vector<base_math::mesh<double>*> m_parts;
+        std::vector<btm::mesh<double>*> m_parts;
         ~cModel() {
             cleanUp();
         }
@@ -16,7 +16,7 @@ class cModel {
             }
             m_parts.clear();
         }
-        void add_part(base_math::mesh<double>* part) {
+        void add_part(btm::mesh<double>* part) {
             m_parts.push_back(part);
         }
         void compute_curvatures();

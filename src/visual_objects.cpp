@@ -11,14 +11,14 @@
 #include "visual_objects.h"
 #include <memory>
 
-#include "gl_graphics.h"
-#include "gl_camera.h"
-#include "gl_light.h"
+#include "glew.h"
+#include "camera.h"
+#include "light.h"
 #include "gl_mesh.h"
-#include "gl_prim.h"
+#include "prim.h"
 
-using namespace base_math;
-using namespace base_opengl;
+using namespace btm;
+using namespace btm;
 
 /// @class visual_objects
 /// @brief Aggregates simple visual line primitives and exposes them as a drawable `gl_prim`.

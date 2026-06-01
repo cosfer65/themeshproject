@@ -1,21 +1,20 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include "gl_graphics.h"
+#include "glew.h"
 #include "themeshview.h"
 #include "themeshmodel.h"
 
-#include "gl_camera.h"
-#include "gl_shaders.h"
-#include "gl_light.h"
-#include "gl_prim.h"
-#include "gl_font.h"
+#include "camera.h"
+#include "shaders.h"
+#include "light.h"
+#include "prim.h"
+#include "font.h"
 
 #include "visual_objects.h"
 #include "arcball.h"
 
 #include "resource.h"
 
-using namespace base_math;
-using namespace base_opengl;
+using namespace btm;
+using namespace btm;
 
 struct mesh_view_private {
 	std::unique_ptr<gl_camera> m_cam;                   ///< gl_camera used to view the scene and compute view/projection.
@@ -46,7 +45,7 @@ struct mesh_view_private {
 	gl_font* font2D;
 };
 
-meshViewWindow::meshViewWindow() : glViewWindow() {
+meshViewWindow::meshViewWindow() : glView() {
 	m_private = new mesh_view_private();
 	m_private->m_ucs_view.reset(new UCS_view());
 	m_private->m_arcball.reset(new arcball(800, 600));
@@ -59,6 +58,17 @@ meshViewWindow::~meshViewWindow() {
 }
 
 void meshViewWindow::init() {
+    // register menu command hanlers
+	ON_COMMAND(this, ID_EDIT_FLIPMESH, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_CALCULATE_MESHCURVATURES, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_MESH, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_FACENORMALS, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_VERTEXNORNALS, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_PRINCIPALCURVATURES, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_GAUSS_CURVATURE, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_MEAN_CURVATURE, meshViewWindow::onMenuCommand);
+	ON_COMMAND(this, ID_VIEW_K1_K2_COMBO, meshViewWindow::onMenuCommand);
+
 	m_private->m_ucs_view->initialize();
 
 	m_private->m_shader.reset(new gl_shader);
@@ -99,7 +109,7 @@ void meshViewWindow::create_model_view() {
 		const auto& parts = m_model->m_parts;
 		m_private->m_draw_parts.reserve(parts.size());
 
-		for (base_math::mesh<double>* part : parts) {
+		for (btm::mesh<double>* part : parts) {
 			part->computeFaceProperties();
 			mesh_data md;
 			collect_mesh_data(part, md);
@@ -108,6 +118,10 @@ void meshViewWindow::create_model_view() {
 			m_private->m_draw_parts.push_back(std::move(prim));
 		}
 	}
+}
+
+inline fvec3 to_fvec3(const dvec3& v) {
+    return fvec3(float(v.x()), float(v.y()), float(v.z()));
 }
 
 bool meshViewWindow::generate_face_normals_view() {
@@ -119,7 +133,7 @@ bool meshViewWindow::generate_face_normals_view() {
 		const auto& parts = m_model->m_parts; // get_parts();
 		m_private->m_face_normals.reserve(parts.size());
 
-		for (base_math::mesh<double>* part : parts) {
+		for (btm::mesh<double>* part : parts) {
 			float vl = float(part->getAverageEdgeLength()) * 0.5f;
 			part->computeFaceProperties();
 			auto mo = std::make_unique<visual_objects>();
@@ -145,7 +159,7 @@ bool meshViewWindow::generate_vertex_normals_view() {
 	m_private->m_vertex_normals.clear();
 	const auto& parts = m_model->m_parts;
 	m_private->m_vertex_normals.reserve(parts.size());
-	for (base_math::mesh<double>* part : parts) {
+	for (btm::mesh<double>* part : parts) {
 		float vl = float(part->getAverageEdgeLength()) * 0.5f;
 		part->computeFaceNormals();
 		part->computeFaceProperties();
@@ -176,7 +190,7 @@ bool meshViewWindow::generate_principal_curvature_view() {
 	m_private->m_model_curvatures_k1.reserve(parts.size());
 	m_private->m_model_curvatures_k2.reserve(parts.size());
 
-	for (base_math::mesh<double>* part : parts) {
+	for (btm::mesh<double>* part : parts) {
 		double vl = part->getAverageEdgeLength() * 0.5f;
 		auto mo_min = std::make_unique<visual_objects>();
 		auto mo_max = std::make_unique<visual_objects>();
@@ -286,7 +300,7 @@ LRESULT meshViewWindow::OnSize(int width, int height) {
 	return 0;
 }
 
-int meshViewWindow::onCommand(int cmd) {
+int meshViewWindow::onMenuCommand(int cmd) {
 	if (!init_done) return 0;
 	if (m_model == nullptr && ID_FILE_LOADMODEL != cmd) return 0;
 
@@ -462,7 +476,7 @@ void meshViewWindow::print_info() {
 }
 
 void meshViewWindow::render() {
-	if (!hWnd || !hDC || !hGLRC) return;
+	if (!get_gl_context()) return;
 	begin_render();
 
 	m_private->m_cam->set_viewport();

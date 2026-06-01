@@ -4,7 +4,7 @@
 #include "vector.h"
 
 /// @brief Forward declarations for core OpenGL helper types used by visual objects.
-namespace base_opengl {
+namespace btm {
     /// @brief Represents a simple GPU-resident mesh (vertex/index buffers, layout, etc.).
     class gl_mesh;
     /// @brief Represents a drawable OpenGL primitive associated with a mesh and material/shader state.
@@ -19,8 +19,8 @@ namespace base_opengl {
 /// OpenGL primitive used to visualize helper elements such as debug vectors or
 /// other miscellaneous objects. Visibility can be toggled at runtime.
 class visual_objects {
-    base_opengl::gl_mesh* m_mesh; ///< Pointer to the associated simple mesh.
-    base_opengl::gl_prim* m_prim; ///< Pointer to the associated OpenGL primitive.
+    btm::gl_mesh* m_mesh; ///< Pointer to the associated simple mesh.
+    btm::gl_prim* m_prim; ///< Pointer to the associated OpenGL primitive.
 public:
     /// @brief Constructs an empty visual object container with no mesh/primitive attached.
     ///
@@ -41,7 +41,7 @@ public:
     /// @param vend   End position of the vector in world or object space.
     /// @return An implementation-defined identifier or index of the added vector,
     ///         or a negative value on failure.
-    int add_vector(const base_math::fvec3& vstart, const base_math::fvec3& vend);
+    int add_vector(const btm::fvec3& vstart, const btm::fvec3& vend);
 
     /// @brief Creates and initializes the OpenGL primitive that will draw the mesh.
     ///
@@ -50,7 +50,7 @@ public:
     ///
     /// @return Pointer to the created `gl_prim` instance. Ownership semantics are
     ///         implementation-defined but typically remain with this object.
-    base_opengl::gl_prim* create_prim();
+    btm::gl_prim* create_prim();
 
     /// @brief Returns the underlying OpenGL primitive used for rendering.
     ///
@@ -58,7 +58,7 @@ public:
     ///
     /// @return The `gl_prim` instance associated with this visual object, or `nullptr`
     ///         if it has not been created yet.
-    base_opengl::gl_prim* get_prim() {
+    btm::gl_prim* get_prim() {
         return m_prim;
     }
 
@@ -68,7 +68,7 @@ public:
     /// this call may be a no-op.
     ///
     /// @param sh Shader program to use when drawing the underlying primitive.
-    void render(base_opengl::gl_shader* sh);
+    void render(btm::gl_shader* sh);
 };
 
 /// @brief Forward declaration of implementation details for `UCS_view`.
@@ -83,7 +83,7 @@ struct UCS_view_private;
 /// of a local coordinate system, typically rendered as a small axis gizmo.
 class UCS_view {
     UCS_view_private* m_private_data; ///< Opaque pointer to implementation-specific data.
-    base_math::fmat4 m_rotation;                 ///< Current rotation matrix for the UCS, stored in column-major order.
+    btm::fmat4 m_rotation;                 ///< Current rotation matrix for the UCS, stored in column-major order.
 public:
     /// @brief Constructs an uninitialized UCS view.
     ///
@@ -125,7 +125,7 @@ public:
     ///
     /// @param R Rotation matrix to apply to the UCS, in the same coordinate
     ///          space and layout convention as `m_rotation` (column-major).
-    void set_user_rotation(const base_math::fmat4& R);
+    void set_user_rotation(const btm::fmat4& R);
 };
 
 

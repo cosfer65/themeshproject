@@ -16,7 +16,7 @@
 #include "mesh.h"
 #include "vector.h"
 
-using namespace base_math;
+using namespace btm;
 
 /**
  * @brief Computes the cotangent weight for an edge between two vertices.

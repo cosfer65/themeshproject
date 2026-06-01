@@ -5,7 +5,7 @@
 #include "base_definitions.h"
 #include "nurbs_core.h"
 
-using namespace base_math;
+using namespace btm;
 
 void compute_vertex_curvatures(mesh<double>* fmesh);
 void cModel::compute_curvatures() {
@@ -156,7 +156,7 @@ static bool load_obj(const std::string& fnm, cModel* mdl) {
     std::ifstream mdl_file(fnm);
     size_t vertex_count = 1;
     size_t face_count = 1;
-    base_math::mesh<double>* mesh = nullptr;
+    btm::mesh<double>* mesh = nullptr;
 
     if (mdl_file.is_open()) {
         while (std::getline(mdl_file, line)) {
@@ -177,7 +177,7 @@ static bool load_obj(const std::string& fnm, cModel* mdl) {
                     // finalize previous mesh part
                     // mesh->average_edge_length = mesh->total_edge_length / mesh->getEdges().size();
                 }
-                mesh = new base_math::mesh<double>();
+                mesh = new btm::mesh<double>();
                 mdl->add_part(mesh);
             }
             else if (tokens[0] == "v") {
@@ -185,7 +185,7 @@ static bool load_obj(const std::string& fnm, cModel* mdl) {
                 double x = atof(tokens[1].c_str());
                 double y = atof(tokens[2].c_str());
                 double z = atof(tokens[3].c_str());
-                mesh->addVertex(vertex_count, base_math::dvec3(x, y, z));
+                mesh->addVertex(vertex_count, btm::dvec3(x, y, z));
                 ++vertex_count;
             }
             else if (tokens[0] == "f") {
@@ -256,7 +256,7 @@ static void file_dump_model(const std::string& fnm, const cModel* mdl) {
 }
 
 static bool load_nurbs(const std::string& fnm, cModel* mdl) {
-    std::vector<base_math::mesh<double>*> meshes = create_from_nurbs_file<double>(fnm, 15, 15);
+    std::vector<btm::mesh<double>*> meshes = create_from_nurbs_file<double>(fnm, 15, 15);
     if (!meshes.empty()) {
         for (auto mesh : meshes) {
             mdl->add_part(mesh);
@@ -292,8 +292,8 @@ cModel* load_mesh_model(const std::string& fnm) {
     return nullptr;
 }
 
-base_math::mesh<double>* create_sphere_mesh(double radius) {
-    base_math::mesh<double>* ms = new base_math::mesh<double>;
+btm::mesh<double>* create_sphere_mesh(double radius) {
+    btm::mesh<double>* ms = new btm::mesh<double>;
 
     int sectorCount = 48;
     int stackCount = 48;
@@ -353,7 +353,7 @@ base_math::mesh<double>* create_sphere_mesh(double radius) {
 
 cModel* generate_sphere_model(){
     cModel* mdl = new cModel();
-    base_math::mesh<double>* sphere_mesh = create_sphere_mesh(1.0);
+    btm::mesh<double>* sphere_mesh = create_sphere_mesh(1.0);
     mdl->add_part(sphere_mesh);
     recalculate_model(mdl);
     return mdl;
