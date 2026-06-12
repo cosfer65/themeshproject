@@ -14,11 +14,11 @@ the tutorials introduce new concepts and tools.
 
 ## Repository Structure
 
-LEGAL/              # legal and licensing information
-projects/           # contains individual tutorial project folders
-external/           # Contains the btm-framework submodule
-runtime/            # contains sample models, shaders and other runtime required files
-CMakeLists.txt
+LEGAL/              # legal and licensing information  
+projects/           # contains individual tutorial project folders  
+external/           # Contains the btm-framework submodule  
+runtime/            # contains sample models, shaders and other runtime required files  
+CMakeLists.txt  
 
 ---
 
@@ -33,8 +33,6 @@ The project is currently based on version v0.3.2 of btm-framework
 To update the submodule:
 
 ## bash
-cd external/btm-framework
-
-git fetch
-
-git checkout v0.3.2
+cd external/btm-framework  
+git fetch  
+git checkout v0.3.2  
