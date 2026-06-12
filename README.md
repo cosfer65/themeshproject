@@ -14,11 +14,10 @@ the tutorials introduce new concepts and tools.
 
 ## Repository Structure
 
-themeshproject/
-include/            # Public headers for meshcore
-src/                # Implementation files
-apps/               # Future standalone tools
+LEGAL/              # legal and licensing information
+projects/           # contains individual tutorial project folders
 external/           # Contains the btm-framework submodule
+runtime/            # contains sample models, shaders and other runtime required files
 CMakeLists.txt
 
 ---
@@ -29,7 +28,10 @@ The project depends on the framework via:
 
 external/btm-framework/
 
-Initialize or update the submodule:
+The project is currently based on version v0.3.2 of btm-framework
+To update the submodule:
 
 ## bash
-git submodule update --init --recursive
+cd external/btm-framework
+git fetch
+git checkout v0.3.2
