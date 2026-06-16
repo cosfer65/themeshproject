@@ -25,7 +25,7 @@ CMakeLists.txt
 ## clone the repo
 
 git clone https://github.com/cosfer65/themeshproject.git  
-cd themeshproject
+cd themeshproject  
 git submodule update --init --recursive
 
 ## Framework Dependency
