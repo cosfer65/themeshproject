@@ -22,17 +22,16 @@ CMakeLists.txt
 
 ---
 
+## clone the repo
+
+git clone https://github.com/cosfer65/themeshproject.git  
+cd themeshproject
+git submodule update --init --recursive
+
 ## Framework Dependency
 
 The project depends on the framework via:
 
 external/btm-framework/
 
-The project is currently based on version v0.3.2 of btm-framework
-
-To update the submodule:
-
-## bash
-cd external/btm-framework  
-git fetch  
-git checkout v0.3.2  
+The project is currently based on version v0.3.3 of btm-framework
