@@ -1,4 +1,5 @@
 /build
 /runtime/Debug
+/runtime/Release
 /.vs
 /out
