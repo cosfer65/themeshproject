@@ -7,9 +7,6 @@
 of *Before the Mesh*. It implements practical geometry, meshing, and solver
 components using the `btm-framework` as a foundation.
 
-This repository is intentionally minimal at the start. It grows progressively as
-the tutorials introduce new concepts and tools.
-
 ---
 
 ## Repository Structure
@@ -34,4 +31,15 @@ The project depends on the framework via:
 
 external/btm-framework/
 
-The project is currently based on version v0.3.3 of btm-framework
+The project is currently based on version v0.3.5 of btm-framework  
+to checkout this version of the framework:  
+cd external/btm-framework/  
+git checkout v0.3.5
+
+
+## Building the project
+
+mkdir build  
+cd build  
+cmake ..  
+cmake --build .  
