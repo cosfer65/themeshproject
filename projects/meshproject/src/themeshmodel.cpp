@@ -114,8 +114,8 @@ void cModel::prepare_k1_k2_preview() {
     std::fstream log_file("c:\\temp\\k1k2_curvature.txt", std::ios::out);
     for (auto& part : m_parts) {
         for (auto& v : part->vertex_curvatures) {
-            double k1 = v.k1;
-            double k2 = v.k2;
+            double k1 = v.kmin;
+            double k2 = v.kmax;
             log_file << "Vertex k1: " << k1 << ", k2: " << k2 << std::endl;
 
             if (k1 < -1.e-2) { // k_1 is negative
