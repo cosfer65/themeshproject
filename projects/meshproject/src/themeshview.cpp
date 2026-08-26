@@ -78,8 +78,9 @@ void theMeshView::render() {
     // which is used for mouse coordinate normalization
     m_view_resources->m_arcball.resize((float)width, (float)height);
 
+    m_view_resources->m_shader.use();
+
     if (m_model) {
-        m_view_resources->m_shader.use();
 
         m_view_resources->m_light.set_position(fvec3(-10, 0, 20));
         m_view_resources->m_light.set_color(fvec3(1.0f, 1.f, 1.f));
@@ -193,9 +194,9 @@ void theMeshView::render() {
 
         glEnable(GL_DEPTH_TEST);
 
-        m_view_resources->m_shader.end();
-        print_info();
     }
+    m_view_resources->m_shader.end();
+    print_info();
     // render coordinate system arrows
     m_view_resources->m_ucs_view.resize_window(width, height);
     m_view_resources->m_ucs_view.set_user_rotation(rot_mat); // apply the same rotation to the UCS view
