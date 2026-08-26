@@ -185,8 +185,10 @@ void theMeshView::render() {
         m_view_resources->m_potential_creases.view_matrix = rot_mat;
         m_view_resources->m_potential_creases.render(&m_view_resources->m_shader);
 
-        m_view_resources->m_boundary_edges.view_matrix = rot_mat;
-        m_view_resources->m_boundary_edges.render(&m_view_resources->m_shader);
+        if (m_view_state.show_boundaries) {
+            m_view_resources->m_boundary_edges.view_matrix = rot_mat;
+            m_view_resources->m_boundary_edges.render(&m_view_resources->m_shader);
+        }
         glLineWidth(1.0f);
 
         glEnable(GL_DEPTH_TEST);
@@ -220,7 +222,9 @@ void theMeshView::flip_mesh() {
         for (btm::MeshExplicit<double>* part : m_model->m_parts) {
             part->flip_all_faces();
         }
-        m_view_resources->m_draw_parts.clear();
+        // m_view_resources->m_draw_parts.clear();
+        m_view_resources->invalidate_visualizations();
+        m_view_state.reset();
         create_model_view();
     }
 }
@@ -327,11 +331,9 @@ void theMeshView::test_function() {
     m_view_resources->m_potential_ridges.clear();
     m_view_resources->m_potential_valleys.clear();
     m_view_resources->m_potential_creases.clear();
-    m_view_resources->m_boundary_edges.clear();
     m_view_resources->m_potential_ridges.clear_do();
     m_view_resources->m_potential_valleys.clear_do();
     m_view_resources->m_potential_creases.clear_do();
-    m_view_resources->m_boundary_edges.clear_do();
 
     for (btm::MeshExplicit<double>* part : m_model->m_parts) {
         curvature::compute_vertex_curvatures<double>(*part);
@@ -349,19 +351,9 @@ void theMeshView::test_function() {
         }
     }
 
-    int num_edges = 0;
     for (btm::MeshExplicit<double>* part : m_model->m_parts) {
         for (std::uint32_t v = 0; v < part->num_edges(); ++v) {
             const auto& e = part->edge(v);
-            ++num_edges;
-            if (e.is_boundary()) {
-                const auto& vertex0 = part->vertices[e.v0()];
-                const auto& vertex1 = part->vertices[e.v1()];
-                fvec3 pos0 = dvec_to_fvec<3>(vertex0.position);
-                fvec3 pos1 = dvec_to_fvec<3>(vertex1.position);
-                m_view_resources->m_boundary_edges.add_vector(pos0, pos1);
-            }
-
             double da = _computeDihedralAngle(part, v);
             if (da > g_feature_line_params.dihedralAngleThreshold) {
                 const auto& vertex0 = part->vertices[e.v0()];
@@ -387,9 +379,5 @@ void theMeshView::test_function() {
     m_view_resources->m_potential_creases.create_prim(GL_LINES);
     m_view_resources->m_potential_creases.set_color(fvec3(0.f, 1.f, 0.f));
     m_view_resources->m_potential_creases.clear_mesh_data();
-
-    m_view_resources->m_boundary_edges.create_prim(GL_LINES);
-    m_view_resources->m_boundary_edges.set_color(fvec3(1.f, 1.f, 0.f));
-    m_view_resources->m_boundary_edges.clear_mesh_data();
 }
 #endif

@@ -19,6 +19,7 @@ struct view_state {
     bool show_ridges = false; ///< Whether to visualize ridges on the mesh.
     bool show_valleys = false; ///< Whether to visualize valleys on the mesh.
     bool show_creases = false; ///< Whether to visualize creases on the mesh.
+    bool show_boundaries = false; ///< Whether to visualize mesh boundaries.
 
     void reset() {
         // enable mesh rendering by default
@@ -37,6 +38,7 @@ struct view_state {
         show_ridges = false;
         show_valleys = false;
         show_creases = false;
+        show_boundaries = false;
     }
 
     bool show_curvture_map() {
@@ -56,6 +58,7 @@ class theMeshView {
     void createVertexK2View();
     void createFaceNormalsView();
     void createVertexNormalsView();
+    void createBoundariesView();
     void set_callbacks();
     void reset_view();
 
@@ -90,6 +93,7 @@ public:
     void toggle_show_ridges();
     void toggle_show_valleys();
     void toggle_show_creases();
+    void toggle_show_boundaries();
 
     void reset_view_state();
 #ifdef _DEBUG

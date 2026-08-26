@@ -30,6 +30,10 @@ public:
     void set_name(const std::string& name) {
         m_name = name;
     }
+    bool curvatures_calculated() const {
+        if (m_parts.empty()) return false;
+        return m_parts[0]->curvatures_calculated();
+    }
 
     void prepare_gaussian_curvature_preview();
     void prepare_k1_k2_preview();

@@ -31,6 +31,11 @@ void theMeshView::toggle_show_vertex_normals() {
 }
 
 void theMeshView::toggle_show_principal_k1() {
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_principal_k1 = false;
+        return;
+    }
+
     m_view_state.show_principal_k1 = !m_view_state.show_principal_k1;
     if (m_view_state.show_principal_k1) {
         createVertexK1View();
@@ -38,6 +43,10 @@ void theMeshView::toggle_show_principal_k1() {
 }
 
 void theMeshView::toggle_show_principal_k2() {
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_principal_k2 = false;
+        return;
+    }
     m_view_state.show_principal_k2 = !m_view_state.show_principal_k2;
     if (m_view_state.show_principal_k2) {
         createVertexK2View();
@@ -59,6 +68,12 @@ void theMeshView::toggle_show_k1_k2_preview() {
 bool theMeshView::toggle_map_view(int map_type) {
     if (!m_model) {
         return false; // no model loaded
+    }
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_gaussian_curvature = false;
+        m_view_state.show_mean_curvature = false;
+        m_view_state.show_k1_k2_preview = false;
+        return false;
     }
 
     bool map_view_flags[] = { m_view_state.show_gaussian_curvature, m_view_state.show_mean_curvature, m_view_state.show_k1_k2_preview };
@@ -110,15 +125,34 @@ bool theMeshView::toggle_map_view(int map_type) {
 }
 
 void theMeshView::toggle_show_ridges() {
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_ridges = false;
+        return;
+    }
     m_view_state.show_ridges = !m_view_state.show_ridges;
 }
 
 void theMeshView::toggle_show_valleys() {
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_valleys = false;
+        return;
+    }
     m_view_state.show_valleys = !m_view_state.show_valleys;
 }
 
 void theMeshView::toggle_show_creases() {
+    if (!m_model->curvatures_calculated()) {
+        m_view_state.show_creases = false;
+        return;
+    }
     m_view_state.show_creases = !m_view_state.show_creases;
+}
+
+void theMeshView::toggle_show_boundaries() {
+    m_view_state.show_boundaries = !m_view_state.show_boundaries;
+    if (m_view_state.show_boundaries) {
+        createBoundariesView();
+    }
 }
 
 void theMeshView::create_model_view() {
@@ -139,6 +173,11 @@ void theMeshView::createVertexK1View() {
     }
 
     m_view_resources->m_model_curvatures_k1.clear();
+
+    if (!m_model->curvatures_calculated()) {
+        return;
+    }
+
     const auto& parts = m_model->m_parts;
     for (btm::MeshExplicit<double>* part : parts) {
         float average_edge_length = static_cast<float>(part->average_edge_length());
@@ -166,6 +205,10 @@ void theMeshView::createVertexK2View() {
     }
 
     m_view_resources->m_model_curvatures_k2.clear();
+
+    if (!m_model->curvatures_calculated())
+        return;
+
     const auto& parts = m_model->m_parts;
     for (btm::MeshExplicit<double>* part : parts) {
         float average_edge_length = static_cast<float>(part->average_edge_length());
@@ -228,6 +271,30 @@ void theMeshView::createVertexNormalsView() {
     m_view_resources->m_vertex_normals.set_color(fvec3(0.f, 1.f, 0.f)); // green color for vertex normals
     m_view_resources->m_vertex_normals.clear_mesh_data();
 }
+
+void theMeshView::createBoundariesView() {
+    if (!m_model) {
+        return; // No model loaded, cannot create boundaries view
+    }
+
+    m_view_resources->m_boundary_edges.clear();
+    m_view_resources->m_boundary_edges.clear_do();
+    for (btm::MeshExplicit<double>* part : m_model->m_parts) {
+        for (std::uint32_t v = 0; v < part->num_edges(); ++v) {
+            const auto& e = part->edge(v);
+            if (e.is_boundary()) {
+                const auto& vertex0 = part->vertices[e.v0()];
+                const auto& vertex1 = part->vertices[e.v1()];
+                fvec3 pos0 = dvec_to_fvec<3>(vertex0.position);
+                fvec3 pos1 = dvec_to_fvec<3>(vertex1.position);
+                m_view_resources->m_boundary_edges.add_vector(pos0, pos1);
+            }
+        }
+    }
+    m_view_resources->m_boundary_edges.create_prim();
+    m_view_resources->m_boundary_edges.set_color(fvec3(1.f, 1.f, 0.f)); // yellow color for boundary edges
+    m_view_resources->m_boundary_edges.clear_mesh_data();
+}   
 
 void theMeshView::reset_view() {
     m_view_resources->m_cam.set_position(btm::fvec3(0, 0, 25));

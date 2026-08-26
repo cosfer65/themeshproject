@@ -113,7 +113,7 @@ static void create_application_menu(btm::FrameWindow* pFrame, btm::Menu& menu)
         }
         return 1;
         });
-    int viewK1K2Id = menu.add_item(viewMenu, "K1/K2 Curvatures", []() {
+    int viewK1K2Id = menu.add_item(viewMenu, "Kmax/Kmin Curvatures", []() {
         if (meshView) {
             meshView->toggle_show_k1_k2_preview();
         }
@@ -135,6 +135,12 @@ static void create_application_menu(btm::FrameWindow* pFrame, btm::Menu& menu)
     int viewCreases = menu.add_item(viewMenu, "Creases", []() {
         if (meshView) {
             meshView->toggle_show_creases();
+        }
+        return 1;
+        });
+    int viewBoundaries = menu.add_item(viewMenu, "Boundaries", []() {
+        if (meshView) {
+            meshView->toggle_show_boundaries();
         }
         return 1;
         });
