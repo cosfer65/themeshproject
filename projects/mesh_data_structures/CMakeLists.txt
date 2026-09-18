@@ -2,7 +2,7 @@ set(NAME "mesh_data_structures")
 
 message(STATUS "-----> Configuring project: ${NAME}")
 
-add_executable(${NAME} main.cpp)
+add_executable(${NAME} mesh_data_structures.cpp)
 
 target_link_libraries(${NAME} PUBLIC btm-framework)
 

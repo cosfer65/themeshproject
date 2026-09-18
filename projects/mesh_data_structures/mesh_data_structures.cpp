@@ -14,7 +14,7 @@ using namespace btm;
 
 // global application resources 
 std::unique_ptr<gl_camera> g_cam;     ///< gl_camera used to view the scene and compute view/projection.
-std::unique_ptr<gl_shader> g_shader;  ///< Shader program used for mesh and helper rendering.
+gl_shader* g_shader;  ///< Shader program used for mesh and helper rendering.
 
 // gl_prim is a wrapper around OpenGL calls to render the mesh data.
 std::unique_ptr<gl_prim> mesh_renderer;
@@ -66,12 +66,12 @@ void render() {
     g_shader->use();
     // call the camera's apply method to set the view and projection matrices in the shader.
     // The shader will use these matrices to transform the vertex positions from world space to clip space for rendering.
-    g_cam->apply(g_shader.get());
+    g_cam->apply(g_shader);
 
     // now call the renderer to draw the mesh. The MeshRenderer will use the shader and the mesh data to issue 
     // OpenGL draw calls to render the triangles of the mesh on the screen.
     mesh_renderer->force_black = false;  // set to true to render the mesh in black (e.g., for wireframe)
-    mesh_renderer->render(g_shader.get());
+    mesh_renderer->render(g_shader);
 
     g_shader->end();
 
@@ -102,10 +102,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR, int nCmdShow) {
     g_cam.reset(new btm::gl_camera(btm::fvec3(0, 0, 20), btm::fvec3(0, 0, 0), btm::fvec3(0, 1, 0)));
     g_cam->set_fov(btm::dtr(10.f));
 
-    g_shader.reset(new gl_shader);
-    g_shader->add_file(GL_VERTEX_SHADER, "resources/shaders/generic_VertexShader.glsl");
-    g_shader->add_file(GL_FRAGMENT_SHADER, "resources/shaders/generic_FragmentShader.glsl");
-    g_shader->load();
+    g_shader = create_shader_f("resources/shaders/generic_VertexShader.glsl", "resources/shaders/generic_FragmentShader.glsl");
     /// }
 
     start_timer();

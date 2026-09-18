@@ -78,15 +78,15 @@ void theMeshView::render() {
     // which is used for mouse coordinate normalization
     m_view_resources->m_arcball.resize((float)width, (float)height);
 
-    m_view_resources->m_shader.use();
+    m_view_resources->m_shader->use();
 
     if (m_model) {
 
         m_view_resources->m_light.set_position(fvec3(-10, 0, 20));
         m_view_resources->m_light.set_color(fvec3(1.0f, 1.f, 1.f));
 
-        m_view_resources->m_light.apply(&m_view_resources->m_shader);
-        m_view_resources->m_cam.apply(&m_view_resources->m_shader);
+        m_view_resources->m_light.apply(m_view_resources->m_shader);
+        m_view_resources->m_cam.apply(m_view_resources->m_shader);
 
         glEnable(GL_DEPTH_TEST);
 
@@ -98,15 +98,16 @@ void theMeshView::render() {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
                 if (m_view_state.show_curvture_map()) {
-                    m_view_resources->m_shader.set_int("useVertexColor", 1);
+                    m_view_resources->m_shader->set_uniform("useVertexColor", 1);
                 }
                 for (const auto& part : m_view_resources->m_draw_parts) {
                     part->set_draw_mode(GL_FILL);
                     part->force_black = false;
                     part->view_matrix = rot_mat;   // apply the current arcball rotation to the mesh parts
-                    part->render(&m_view_resources->m_shader);
+                    part->set_color(fvec3(0.8f, 0.8f, 0.8f));
+                    part->render(m_view_resources->m_shader);
                 }
-                m_view_resources->m_shader.set_int("useVertexColor", 0);
+                m_view_resources->m_shader->set_uniform("useVertexColor", 0);
             }
 
             if (m_view_state.show_wireframe) {
@@ -118,8 +119,8 @@ void theMeshView::render() {
                     part->set_draw_mode(GL_LINE);
                     part->force_black = true; // render wireframe in black
                     part->view_matrix = rot_mat;   // apply the current arcball rotation to the mesh parts
-                    part->set_use_vertex_color(0); // ensure vertex color is disabled for wireframe
-                    part->render(&m_view_resources->m_shader);
+                    part->set_color(fvec3(0.2f, 0.2f, 0.2f));
+                    part->render(m_view_resources->m_shader);
                 }
                 glDisable(GL_POLYGON_OFFSET_LINE);
             }
@@ -129,21 +130,21 @@ void theMeshView::render() {
 
         if (m_view_state.show_face_normals) {
             m_view_resources->m_face_normals.view_matrix = rot_mat;  // apply the same rotation to the face normals visualization
-            m_view_resources->m_face_normals.render(&m_view_resources->m_shader);
+            m_view_resources->m_face_normals.render(m_view_resources->m_shader);
         }
 
         if (m_view_state.show_vertex_normals) {
             m_view_resources->m_vertex_normals.view_matrix = rot_mat;  // apply the same rotation to the vertex normals visualization
-            m_view_resources->m_vertex_normals.render(&m_view_resources->m_shader);
+            m_view_resources->m_vertex_normals.render(m_view_resources->m_shader);
         }
 
         if (m_view_state.show_principal_k1) {
             m_view_resources->m_model_curvatures_k1.view_matrix = rot_mat;  // apply the same rotation to the principal curvatures visualization
-            m_view_resources->m_model_curvatures_k1.render(&m_view_resources->m_shader);
+            m_view_resources->m_model_curvatures_k1.render(m_view_resources->m_shader);
         }
         if (m_view_state.show_principal_k2) {
             m_view_resources->m_model_curvatures_k2.view_matrix = rot_mat;  // apply the same rotation to the principal curvatures visualization
-            m_view_resources->m_model_curvatures_k2.render(&m_view_resources->m_shader);
+            m_view_resources->m_model_curvatures_k2.render(m_view_resources->m_shader);
         }
 
         if (m_view_state.show_ridges || m_view_state.show_creases || m_view_state.show_valleys)
@@ -157,45 +158,45 @@ void theMeshView::render() {
                 m_view_resources->m_feature_lines[0].view_matrix = rot_mat;
                 // render the feature lines with the current shader,
                 // the graphics engine uses the GL_LINES primitive type to render the feature lines
-                m_view_resources->m_feature_lines[0].render(&m_view_resources->m_shader);
+                m_view_resources->m_feature_lines[0].render(m_view_resources->m_shader);
             }
             if (m_view_state.show_valleys) {
                 // apply the model rotation to the feature lines visualization
                 m_view_resources->m_feature_lines[1].view_matrix = rot_mat;
                 // render the feature lines with the current shader,
                 // the graphics engine uses the GL_LINES primitive type to render the feature lines
-                m_view_resources->m_feature_lines[1].render(&m_view_resources->m_shader);
+                m_view_resources->m_feature_lines[1].render(m_view_resources->m_shader);
             }
             if (m_view_state.show_creases) {
                 // apply the model rotation to the feature lines visualization
                 m_view_resources->m_feature_lines[2].view_matrix = rot_mat;
                 // render the feature lines with the current shader,
                 // the graphics engine uses the GL_LINES primitive type to render the feature lines
-                m_view_resources->m_feature_lines[2].render(&m_view_resources->m_shader);
+                m_view_resources->m_feature_lines[2].render(m_view_resources->m_shader);
             }
             glDisable(GL_POLYGON_OFFSET_LINE);
             glLineWidth(1.0f);
         }
         glLineWidth(3.0f);
         m_view_resources->m_potential_ridges.view_matrix = rot_mat;
-        m_view_resources->m_potential_ridges.render(&m_view_resources->m_shader);
+        m_view_resources->m_potential_ridges.render(m_view_resources->m_shader);
         
         m_view_resources->m_potential_valleys.view_matrix = rot_mat;
-        m_view_resources->m_potential_valleys.render(&m_view_resources->m_shader);
+        m_view_resources->m_potential_valleys.render(m_view_resources->m_shader);
         
         m_view_resources->m_potential_creases.view_matrix = rot_mat;
-        m_view_resources->m_potential_creases.render(&m_view_resources->m_shader);
+        m_view_resources->m_potential_creases.render(m_view_resources->m_shader);
 
         if (m_view_state.show_boundaries) {
             m_view_resources->m_boundary_edges.view_matrix = rot_mat;
-            m_view_resources->m_boundary_edges.render(&m_view_resources->m_shader);
+            m_view_resources->m_boundary_edges.render(m_view_resources->m_shader);
         }
         glLineWidth(1.0f);
 
         glEnable(GL_DEPTH_TEST);
 
     }
-    m_view_resources->m_shader.end();
+    m_view_resources->m_shader->end();
     print_info();
     // render coordinate system arrows
     m_view_resources->m_ucs_view.resize_window(width, height);
@@ -332,9 +333,6 @@ void theMeshView::test_function() {
     m_view_resources->m_potential_ridges.clear();
     m_view_resources->m_potential_valleys.clear();
     m_view_resources->m_potential_creases.clear();
-    m_view_resources->m_potential_ridges.clear_do();
-    m_view_resources->m_potential_valleys.clear_do();
-    m_view_resources->m_potential_creases.clear_do();
 
     for (btm::MeshExplicit<double>* part : m_model->m_parts) {
         curvature::compute_vertex_curvatures<double>(*part);

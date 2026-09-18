@@ -12,7 +12,7 @@
 struct mesh_view_resources {
     mesh_view_resources() = default;
     gl_camera m_cam;                   ///< gl_camera used to view the scene and compute view/projection.
-    gl_shader m_shader;                ///< Shader program used for mesh and helper rendering.
+    gl_shader* m_shader;                ///< Shader program used for mesh and helper rendering.
     gl_light m_light;                  ///< Primary scene light affecting shading.
 
     UCS_view m_ucs_view;               ///< UCS (user coordinate system) view used to render the axes widget.
@@ -52,10 +52,7 @@ struct mesh_view_resources {
 
     void init() {
         m_cam = gl_camera(fvec3(0, 0, 50), fvec3(0, 0, 0), fvec3(0, 1, 0));
-
-        m_shader.add_file(GL_VERTEX_SHADER, "resources/shaders/meshprojectVertexShader.glsl");
-        m_shader.add_file(GL_FRAGMENT_SHADER, "resources/shaders/meshprojectFragmentShader.glsl");
-        m_shader.load();
+        m_shader = btm::create_shader_f("resources/shaders/meshprojectVertexShader.glsl", "resources/shaders/meshprojectFragmentShader.glsl");
 
         m_light.set_position(fvec3(-20, 20, 50));
 

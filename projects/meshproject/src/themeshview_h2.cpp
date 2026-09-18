@@ -278,7 +278,6 @@ void theMeshView::createBoundariesView() {
     }
 
     m_view_resources->m_boundary_edges.clear();
-    m_view_resources->m_boundary_edges.clear_do();
     for (btm::MeshExplicit<double>* part : m_model->m_parts) {
         for (std::uint32_t v = 0; v < part->num_edges(); ++v) {
             const auto& e = part->edge(v);
